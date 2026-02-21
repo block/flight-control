@@ -18,4 +18,5 @@ class JobDefinition(Base, TimestampMixin):
     env_vars: Mapped[dict | None] = mapped_column(JSON, default=dict)
     credential_ids: Mapped[list | None] = mapped_column(JSON, default=list)
     labels: Mapped[dict | None] = mapped_column(JSON, default=dict)
+    skill_ids: Mapped[list | None] = mapped_column(JSON, nullable=True)  # null=all, []=none, ["name"]=specific
     timeout_seconds: Mapped[int] = mapped_column(Integer, default=1800)
