@@ -32,16 +32,43 @@ async def heartbeat(db: AsyncSession, worker_id: str, status: str = "online") ->
     return worker
 
 
+def labels_match(required_labels: dict | None, worker_labels: dict | None) -> bool:
+    """Check if worker labels satisfy required labels (subset match)."""
+    if not required_labels:
+        return True  # No requirements = any worker can run it
+    if not worker_labels:
+        return False  # Has requirements but worker has no labels
+    # All required labels must be present in worker labels with matching values
+    return all(
+        worker_labels.get(key) == value
+        for key, value in required_labels.items()
+    )
+
+
 async def poll_for_job(db: AsyncSession, worker_id: str) -> PollResponse | None:
-    """Atomically assign a queued job to this worker."""
-    # Find oldest queued run
+    """Atomically assign a queued job to this worker, respecting label constraints."""
+    # Get worker's labels first
+    worker_result = await db.execute(select(Worker).where(Worker.id == worker_id))
+    worker = worker_result.scalar_one_or_none()
+    if not worker:
+        return None
+    worker_labels = worker.labels or {}
+
+    # Find oldest queued run that matches this worker's labels
     result = await db.execute(
         select(JobRun)
         .where(JobRun.status == "queued")
         .order_by(JobRun.created_at.asc())
-        .limit(1)
     )
-    run = result.scalar_one_or_none()
+    runs = result.scalars().all()
+    
+    # Find first run whose required_labels match this worker
+    run = None
+    for candidate in runs:
+        if labels_match(candidate.required_labels, worker_labels):
+            run = candidate
+            break
+    
     if not run:
         return None
 

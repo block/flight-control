@@ -22,6 +22,7 @@ class JobRun(Base, TimestampMixin):
     mcp_servers: Mapped[list | None] = mapped_column(JSON, default=list)
     env_vars: Mapped[dict | None] = mapped_column(JSON, default=dict)
     credential_ids: Mapped[list | None] = mapped_column(JSON, default=list)
+    required_labels: Mapped[dict | None] = mapped_column(JSON, default=dict)  # Labels required on worker
     timeout_seconds: Mapped[int] = mapped_column(Integer, default=1800)
 
     started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
