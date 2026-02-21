@@ -15,3 +15,4 @@ data/
 .DS_Store
 corp-ca.crt
 screenshots/
+.playwright-mcp/
