@@ -6,6 +6,7 @@ from orchestrator.models.job_log import JobLog
 from orchestrator.models.credential import Credential
 from orchestrator.models.schedule import Schedule
 from orchestrator.models.api_key import ApiKey
+from orchestrator.models.artifact import Artifact
 
 __all__ = [
     "Base",
@@ -16,4 +17,5 @@ __all__ = [
     "Credential",
     "Schedule",
     "ApiKey",
+    "Artifact",
 ]

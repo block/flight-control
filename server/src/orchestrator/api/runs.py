@@ -2,13 +2,15 @@ import asyncio
 import json
 
 from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi.responses import Response
 from sqlalchemy.ext.asyncio import AsyncSession
 from sse_starlette.sse import EventSourceResponse
 
 from orchestrator.auth import require_auth
 from orchestrator.database import get_db
+from orchestrator.schemas.artifacts import ArtifactResponse
 from orchestrator.schemas.runs import RunCreate, RunResponse
-from orchestrator.services import log_service, run_service
+from orchestrator.services import artifact_service, log_service, run_service
 
 router = APIRouter(prefix="/runs", tags=["runs"], dependencies=[Depends(require_auth)])
 
@@ -41,6 +43,26 @@ async def cancel_run(run_id: str, db: AsyncSession = Depends(get_db)):
     if not run:
         raise HTTPException(status_code=400, detail="Run cannot be cancelled")
     return run
+
+
+@router.get("/{run_id}/artifacts", response_model=list[ArtifactResponse])
+async def list_run_artifacts(run_id: str, db: AsyncSession = Depends(get_db)):
+    return await artifact_service.list_artifacts(db, run_id)
+
+
+@router.get("/{run_id}/artifacts/{artifact_id}")
+async def download_artifact(
+    run_id: str, artifact_id: str, db: AsyncSession = Depends(get_db)
+):
+    artifact = await artifact_service.get_artifact(db, artifact_id)
+    if not artifact or artifact.run_id != run_id:
+        raise HTTPException(status_code=404, detail="Artifact not found")
+    data = await artifact_service.read_artifact_data(artifact)
+    return Response(
+        content=data,
+        media_type=artifact.content_type,
+        headers={"Content-Disposition": f'attachment; filename="{artifact.filename}"'},
+    )
 
 
 @router.get("/{run_id}/logs")

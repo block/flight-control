@@ -1,46 +1,67 @@
 import asyncio
+import logging
+import re
 from collections import defaultdict
+from dataclasses import dataclass
 
-from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from orchestrator.models.job_log import JobLog
+from orchestrator.models.artifact import Artifact
 from orchestrator.schemas.workers import LogLine
+from orchestrator.services import artifact_service
+
+logger = logging.getLogger(__name__)
 
 # In-memory subscribers for SSE log streaming
 _subscribers: dict[str, list[asyncio.Queue]] = defaultdict(list)
 
+_LOG_LINE_RE = re.compile(r"^\[(stdout|stderr)\] (.*)$")
+
+
+@dataclass
+class LogEntry:
+    stream: str
+    line: str
+    sequence: int
+
 
 async def append_logs(db: AsyncSession, run_id: str, lines: list[LogLine]) -> int:
-    logs = []
-    for line in lines:
-        log = JobLog(
-            run_id=run_id,
-            stream=line.stream,
-            line=line.line,
-            sequence=line.sequence,
-        )
-        logs.append(log)
-    db.add_all(logs)
-    await db.commit()
-
-    # Notify SSE subscribers
+    # SSE pub/sub only — no DB writes
     for queue in _subscribers.get(run_id, []):
         for line in lines:
             await queue.put(line)
 
-    return len(logs)
+    return len(lines)
 
 
 async def get_logs(
     db: AsyncSession, run_id: str, after_sequence: int = 0
-) -> list[JobLog]:
-    result = await db.execute(
-        select(JobLog)
-        .where(JobLog.run_id == run_id, JobLog.sequence > after_sequence)
-        .order_by(JobLog.sequence.asc())
-    )
-    return list(result.scalars().all())
+) -> list[LogEntry]:
+    """Read logs from the run-output.log artifact."""
+    artifacts = await artifact_service.list_artifacts(db, run_id)
+    log_artifact: Artifact | None = None
+    for a in artifacts:
+        if a.filename == "run-output.log":
+            log_artifact = a
+            break
+
+    if not log_artifact:
+        return []
+
+    data = await artifact_service.read_artifact_data(log_artifact)
+    text = data.decode("utf-8", errors="replace")
+
+    entries: list[LogEntry] = []
+    for seq, raw_line in enumerate(text.splitlines(), start=1):
+        if seq <= after_sequence:
+            continue
+        match = _LOG_LINE_RE.match(raw_line)
+        if match:
+            entries.append(LogEntry(stream=match.group(1), line=match.group(2), sequence=seq))
+        else:
+            entries.append(LogEntry(stream="stdout", line=raw_line, sequence=seq))
+
+    return entries
 
 
 def subscribe(run_id: str) -> asyncio.Queue:

@@ -39,6 +39,21 @@ export const api = {
   createAdHocRun: (data) => request('/runs', { method: 'POST', body: JSON.stringify(data) }),
   cancelRun: (id) => request(`/runs/${id}/cancel`, { method: 'POST' }),
   getRunLogs: (id, after = 0) => request(`/runs/${id}/logs?after=${after}`),
+  listArtifacts: (runId) => request(`/runs/${runId}/artifacts`),
+  downloadArtifact: async (runId, artifactId, filename) => {
+    const token = localStorage.getItem('api_key') || 'admin'
+    const res = await fetch(`${API_BASE}/runs/${runId}/artifacts/${artifactId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+    if (!res.ok) throw new Error(`${res.status}: ${await res.text()}`)
+    const blob = await res.blob()
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = filename
+    a.click()
+    URL.revokeObjectURL(url)
+  },
 
   // Credentials
   listCredentials: () => request('/credentials'),

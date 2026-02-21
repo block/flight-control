@@ -16,6 +16,7 @@ const statusConfig = {
 export default function RunDetail() {
   const { id } = useParams()
   const [run, setRun] = useState(null)
+  const [artifacts, setArtifacts] = useState([])
   const [error, setError] = useState(null)
 
   useEffect(() => {
@@ -26,6 +27,10 @@ export default function RunDetail() {
     const interval = setInterval(fetchRun, 5000)
     return () => clearInterval(interval)
   }, [id])
+
+  useEffect(() => {
+    api.listArtifacts(id).then(setArtifacts).catch(() => {})
+  }, [id, run?.status])
 
   if (error) {
     return (
@@ -106,6 +111,32 @@ export default function RunDetail() {
           </div>
         )}
       </div>
+
+      {artifacts.length > 0 && (
+        <div className="mb-6">
+          <h2 className="text-sm font-semibold text-slate-900 uppercase tracking-wide mb-3">Artifacts</h2>
+          <div className="card divide-y divide-slate-100">
+            {artifacts.map((artifact) => (
+              <div key={artifact.id} className="flex items-center justify-between px-4 py-3">
+                <div>
+                  <span className="text-sm font-medium text-slate-700">{artifact.filename}</span>
+                  <span className="text-xs text-slate-400 ml-2">
+                    {artifact.size_bytes < 1024
+                      ? `${artifact.size_bytes} B`
+                      : `${(artifact.size_bytes / 1024).toFixed(1)} KB`}
+                  </span>
+                </div>
+                <button
+                  onClick={() => api.downloadArtifact(id, artifact.id, artifact.filename)}
+                  className="text-xs font-medium text-blue-600 hover:text-blue-800 transition-colors"
+                >
+                  Download
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <h2 className="text-sm font-semibold text-slate-900 uppercase tracking-wide mb-3">Output</h2>
       <LogViewer runId={run.id} isActive={isActive} />

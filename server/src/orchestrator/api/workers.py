@@ -1,8 +1,9 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from orchestrator.auth import require_auth
 from orchestrator.database import get_db
+from orchestrator.schemas.artifacts import ArtifactResponse
 from orchestrator.schemas.runs import RunCompleteRequest
 from orchestrator.schemas.workers import (
     LogBatchRequest,
@@ -11,7 +12,7 @@ from orchestrator.schemas.workers import (
     WorkerRegisterRequest,
     WorkerRegisterResponse,
 )
-from orchestrator.services import log_service, worker_service
+from orchestrator.services import artifact_service, log_service, worker_service
 
 router = APIRouter(
     prefix="/workers", tags=["workers"], dependencies=[Depends(require_auth)]
@@ -47,6 +48,23 @@ async def post_logs(
 ):
     count = await log_service.append_logs(db, run_id, data.lines)
     return {"appended": count}
+
+
+@router.post("/runs/{run_id}/artifacts", response_model=ArtifactResponse, status_code=201)
+async def upload_artifact(
+    run_id: str,
+    file: UploadFile,
+    db: AsyncSession = Depends(get_db),
+):
+    data = await file.read()
+    artifact = await artifact_service.save_artifact(
+        db,
+        run_id=run_id,
+        filename=file.filename or "unnamed",
+        data=data,
+        content_type=file.content_type or "application/octet-stream",
+    )
+    return artifact
 
 
 @router.post("/runs/{run_id}/complete")

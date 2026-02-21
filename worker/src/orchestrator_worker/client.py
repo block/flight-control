@@ -50,6 +50,21 @@ class ServerClient:
             )
             resp.raise_for_status()
 
+    async def upload_artifact(
+        self,
+        run_id: str,
+        filename: str,
+        data: bytes,
+        content_type: str = "text/plain",
+    ) -> dict:
+        async with self._client() as client:
+            resp = await client.post(
+                f"/workers/runs/{run_id}/artifacts",
+                files={"file": (filename, data, content_type)},
+            )
+            resp.raise_for_status()
+            return resp.json()
+
     async def complete_run(
         self,
         run_id: str,
