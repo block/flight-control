@@ -5,11 +5,13 @@ import JobDetail from './pages/JobDetail'
 import RunDetail from './pages/RunDetail'
 import Workers from './pages/Workers'
 import Credentials from './pages/Credentials'
+import Schedules from './pages/Schedules'
 import NewRun from './pages/NewRun'
 
 const navItems = [
   { path: '/', label: 'Dashboard' },
   { path: '/jobs', label: 'Jobs' },
+  { path: '/schedules', label: 'Schedules' },
   { path: '/runs/new', label: 'New Run' },
   { path: '/workers', label: 'Workers' },
   { path: '/credentials', label: 'Credentials' },
@@ -61,6 +63,7 @@ export default function App() {
           <Route path="/runs/:id" element={<RunDetail />} />
           <Route path="/workers" element={<Workers />} />
           <Route path="/credentials" element={<Credentials />} />
+          <Route path="/schedules" element={<Schedules />} />
         </Routes>
       </main>
     </div>

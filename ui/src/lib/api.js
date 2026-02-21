@@ -46,6 +46,12 @@ export const api = {
   updateCredential: (id, data) => request(`/credentials/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   deleteCredential: (id) => request(`/credentials/${id}`, { method: 'DELETE' }),
 
+  // Schedules
+  listSchedules: () => request('/schedules'),
+  createSchedule: (data) => request('/schedules', { method: 'POST', body: JSON.stringify(data) }),
+  updateSchedule: (id, data) => request(`/schedules/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  deleteSchedule: (id) => request(`/schedules/${id}`, { method: 'DELETE' }),
+
   // System
   health: () => request('/health'),
   listWorkers: () => request('/system/workers'),

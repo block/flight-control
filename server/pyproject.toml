@@ -16,7 +16,7 @@ dependencies = [
     "pydantic>=2.10.0",
     "pydantic-settings>=2.6.0",
     "cryptography>=44.0.0",
-    "apscheduler>=3.10.0",
+    "croniter>=2.0.0",
     "sse-starlette>=2.1.0",
     "python-multipart>=0.0.12",
 ]

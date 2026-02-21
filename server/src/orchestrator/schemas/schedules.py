@@ -22,6 +22,10 @@ class ScheduleResponse(BaseModel):
     cron_expression: str
     enabled: bool
     name: str | None = None
+    next_run_at: datetime | None = None
+    last_run_at: datetime | None = None
+    last_run_id: str | None = None
+    job_name: str | None = None
     created_at: datetime
     updated_at: datetime
 

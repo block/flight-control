@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -30,7 +31,20 @@ async def lifespan(app: FastAPI):
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
     logger.info("Database tables created")
+
+    # Start scheduler background task
+    from orchestrator.services.scheduler import run_scheduler
+
+    scheduler_task = asyncio.create_task(run_scheduler())
+
     yield
+
+    # Shutdown scheduler
+    scheduler_task.cancel()
+    try:
+        await scheduler_task
+    except asyncio.CancelledError:
+        pass
 
 
 app = FastAPI(
