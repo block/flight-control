@@ -28,3 +28,7 @@ class JobRun(Base, TimestampMixin):
     completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     result: Mapped[str | None] = mapped_column(Text, nullable=True)
     exit_code: Mapped[int | None] = mapped_column(Integer, nullable=True)
+
+    # Webhook configuration (snapshotted from job definition or set on ad-hoc run)
+    webhook_url: Mapped[str | None] = mapped_column(String, nullable=True)
+    webhook_secret: Mapped[str | None] = mapped_column(String, nullable=True)

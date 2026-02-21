@@ -10,6 +10,7 @@ from orchestrator.models.credential import Credential
 from orchestrator.models.job_run import JobRun
 from orchestrator.models.worker import Worker
 from orchestrator.schemas.workers import PollResponse, WorkerRegisterRequest
+from orchestrator.services.webhook_service import fire_webhook
 
 
 async def register_worker(db: AsyncSession, data: WorkerRegisterRequest) -> Worker:
@@ -121,6 +122,10 @@ async def complete_run(
 
     await db.commit()
     await db.refresh(run)
+
+    # Fire webhook notification asynchronously (non-blocking)
+    fire_webhook(run)
+
     return run
 
 

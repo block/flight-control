@@ -28,6 +28,8 @@ class JobDefinitionCreate(BaseModel):
     credential_ids: list[str] = []
     labels: dict[str, str] = {}
     timeout_seconds: int = 1800
+    webhook_url: str | None = None
+    webhook_secret: str | None = None
 
 
 class JobDefinitionUpdate(BaseModel):
@@ -41,6 +43,8 @@ class JobDefinitionUpdate(BaseModel):
     credential_ids: list[str] | None = None
     labels: dict[str, str] | None = None
     timeout_seconds: int | None = None
+    webhook_url: str | None = None
+    webhook_secret: str | None = None
 
 
 class JobDefinitionResponse(BaseModel):
@@ -55,6 +59,8 @@ class JobDefinitionResponse(BaseModel):
     credential_ids: list = []
     labels: dict = {}
     timeout_seconds: int
+    webhook_url: str | None = None
+    # Note: webhook_secret intentionally excluded from response for security
     created_at: datetime
     updated_at: datetime
 

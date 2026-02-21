@@ -32,6 +32,8 @@ async def create_adhoc_run(db: AsyncSession, data: RunCreate) -> JobRun:
         env_vars=data.env_vars,
         credential_ids=data.credential_ids,
         timeout_seconds=data.timeout_seconds,
+        webhook_url=data.webhook_url,
+        webhook_secret=data.webhook_secret,
     )
     db.add(run)
     await db.commit()

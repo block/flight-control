@@ -32,6 +32,8 @@ async def create_job(db: AsyncSession, data: JobDefinitionCreate) -> JobDefiniti
         credential_ids=data.credential_ids,
         labels=data.labels,
         timeout_seconds=data.timeout_seconds,
+        webhook_url=data.webhook_url,
+        webhook_secret=data.webhook_secret,
     )
     db.add(job)
     await db.commit()
@@ -82,6 +84,8 @@ async def trigger_run(db: AsyncSession, job_id: str) -> JobRun:
         env_vars=job.env_vars,
         credential_ids=job.credential_ids,
         timeout_seconds=job.timeout_seconds,
+        webhook_url=job.webhook_url,
+        webhook_secret=job.webhook_secret,
     )
     db.add(run)
     await db.commit()

@@ -13,6 +13,8 @@ class RunCreate(BaseModel):
     env_vars: dict = {}
     credential_ids: list = []
     timeout_seconds: int = 1800
+    webhook_url: str | None = None
+    webhook_secret: str | None = None
 
 
 class RunResponse(BaseModel):
@@ -31,6 +33,8 @@ class RunResponse(BaseModel):
     completed_at: datetime | None = None
     result: str | None = None
     exit_code: int | None = None
+    webhook_url: str | None = None
+    # Note: webhook_secret intentionally excluded from response for security
     created_at: datetime
     updated_at: datetime
 

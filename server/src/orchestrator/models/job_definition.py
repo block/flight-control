@@ -18,3 +18,7 @@ class JobDefinition(Base, TimestampMixin):
     credential_ids: Mapped[list | None] = mapped_column(JSON, default=list)
     labels: Mapped[dict | None] = mapped_column(JSON, default=dict)
     timeout_seconds: Mapped[int] = mapped_column(Integer, default=1800)
+
+    # Webhook configuration
+    webhook_url: Mapped[str | None] = mapped_column(String, nullable=True)
+    webhook_secret: Mapped[str | None] = mapped_column(String, nullable=True)
