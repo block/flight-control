@@ -21,10 +21,12 @@ async def list_schedules(db: AsyncSession) -> list[ScheduleResponse]:
         .order_by(Schedule.created_at.desc())
     )
     rows = result.all()
-    return [
-        ScheduleResponse.model_validate(row.Schedule, update={"job_name": row.job_name})
-        for row in rows
-    ]
+    schedules = []
+    for row in rows:
+        data = ScheduleResponse.model_validate(row.Schedule)
+        data.job_name = row.job_name
+        schedules.append(data)
+    return schedules
 
 
 async def get_schedule(db: AsyncSession, schedule_id: str) -> Schedule | None:
