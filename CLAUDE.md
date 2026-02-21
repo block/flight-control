@@ -78,6 +78,14 @@ Three-service monorepo (no npm workspaces/Lerna — each service is independent)
 - `components/` — LogViewer (SSE streaming), ProviderModelSelect
 - `lib/api.js` — Fetch wrapper; `lib/models.js` — Provider/model config
 
+## Testing
+
+When making changes, verify them at multiple levels:
+
+- **Unit tests** — Add unit tests for business logic when valuable (e.g., service functions, routing logic). Run with `cd server && pytest` or `cd worker && pytest`.
+- **API tests** — The server is API-first. Test endpoints directly via `curl`, `httpx`, or the OpenAPI docs at `/docs`. API behavior is the source of truth.
+- **Browser tests** — Use the `agent-browser` skill to verify UI changes and end-to-end flows through the dashboard.
+
 ## Environment
 
 - Python 3.12.2 (`.python-version`), Node 20+

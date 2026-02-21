@@ -98,6 +98,8 @@ flight-control/
 
 ## API
 
+The server is **API-first** — the REST API is the primary interface and source of truth. The UI is a consumer of the API, and all functionality is available programmatically. Build integrations, scripts, and automation directly against the API.
+
 All endpoints under `/api/v1`, authenticated with `Authorization: Bearer <token>`.
 
 | Method | Endpoint | Description |
