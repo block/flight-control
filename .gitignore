@@ -14,3 +14,4 @@ data/
 *.sqlite
 .DS_Store
 corp-ca.crt
+screenshots/
