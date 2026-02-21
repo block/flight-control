@@ -5,6 +5,7 @@
 export const PROVIDERS = {
   openai: {
     label: 'OpenAI',
+    envVars: ['OPENAI_API_KEY'],
     models: [
       { id: 'gpt-5.2', tier: 'Flagship' },
       { id: 'gpt-5.2-pro', tier: 'Flagship' },
@@ -34,6 +35,7 @@ export const PROVIDERS = {
   },
   anthropic: {
     label: 'Anthropic',
+    envVars: ['ANTHROPIC_API_KEY'],
     models: [
       { id: 'claude-sonnet-4-5', tier: 'Latest' },
       { id: 'claude-sonnet-4-5-20250929', tier: 'Latest' },
@@ -50,6 +52,7 @@ export const PROVIDERS = {
   },
   google: {
     label: 'Google Gemini',
+    envVars: ['GOOGLE_API_KEY'],
     models: [
       { id: 'gemini-2.5-pro', tier: 'Latest' },
       { id: 'gemini-2.5-flash', tier: 'Latest' },
@@ -62,6 +65,7 @@ export const PROVIDERS = {
   },
   openrouter: {
     label: 'OpenRouter',
+    envVars: ['OPENROUTER_API_KEY'],
     models: [
       { id: 'anthropic/claude-sonnet-4.5', tier: 'Anthropic' },
       { id: 'anthropic/claude-sonnet-4', tier: 'Anthropic' },
@@ -78,6 +82,7 @@ export const PROVIDERS = {
   },
   ollama: {
     label: 'Ollama (Local)',
+    envVars: [],
     models: [
       { id: 'qwen3', tier: 'Default' },
       { id: 'qwen3-vl', tier: 'Default' },
@@ -87,6 +92,7 @@ export const PROVIDERS = {
   },
   databricks: {
     label: 'Databricks',
+    envVars: ['DATABRICKS_HOST', 'DATABRICKS_TOKEN'],
     models: [
       { id: 'databricks-claude-sonnet-4-5', tier: 'Claude' },
       { id: 'databricks-claude-sonnet-4', tier: 'Claude' },
@@ -99,6 +105,7 @@ export const PROVIDERS = {
   },
   xai: {
     label: 'xAI (Grok)',
+    envVars: ['XAI_API_KEY'],
     models: [
       { id: 'grok-code-fast-1', tier: 'Coding' },
       { id: 'grok-4-0709', tier: 'Latest' },
@@ -111,6 +118,7 @@ export const PROVIDERS = {
   },
   bedrock: {
     label: 'AWS Bedrock',
+    envVars: ['AWS_ACCESS_KEY_ID', 'AWS_SECRET_ACCESS_KEY', 'AWS_REGION'],
     models: [
       { id: 'us.anthropic.claude-sonnet-4-5-20250929-v1:0', tier: 'Claude' },
       { id: 'us.anthropic.claude-sonnet-4-20250514-v1:0', tier: 'Claude' },
@@ -122,6 +130,7 @@ export const PROVIDERS = {
   },
   azure: {
     label: 'Azure OpenAI',
+    envVars: ['AZURE_OPENAI_API_KEY', 'AZURE_OPENAI_ENDPOINT'],
     models: [
       { id: 'gpt-4o', tier: 'Standard' },
       { id: 'gpt-4o-mini', tier: 'Standard' },
@@ -131,6 +140,7 @@ export const PROVIDERS = {
   },
   'github-copilot': {
     label: 'GitHub Copilot',
+    envVars: ['GITHUB_TOKEN'],
     models: [
       { id: 'gpt-4.1', tier: 'OpenAI' },
       { id: 'gpt-5-mini', tier: 'OpenAI' },

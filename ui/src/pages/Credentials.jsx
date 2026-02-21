@@ -1,15 +1,39 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { api } from '../lib/api'
+import { PROVIDERS } from '../lib/models'
+
+const providerEntries = Object.entries(PROVIDERS).filter(([, p]) => p.envVars?.length > 0)
 
 export default function Credentials() {
   const [credentials, setCredentials] = useState([])
   const [showForm, setShowForm] = useState(false)
   const [form, setForm] = useState({ name: '', env_var: '', value: '', description: '' })
   const [error, setError] = useState(null)
+  const [showDropdown, setShowDropdown] = useState(false)
+  const dropdownRef = useRef(null)
 
   const fetchCreds = () => api.listCredentials().then(setCredentials).catch((e) => setError(e.message))
 
   useEffect(() => { fetchCreds() }, [])
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setShowDropdown(false)
+      }
+    }
+    if (showDropdown) document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [showDropdown])
+
+  const configuredVars = new Set(credentials.map((c) => c.env_var))
+
+  const fillFromEnvVar = (envVar) => {
+    const name = envVar.toLowerCase().replace(/_/g, '-')
+    setForm({ name, env_var: envVar, value: '', description: '' })
+    setShowForm(true)
+    setShowDropdown(false)
+  }
 
   const handleCreate = async (e) => {
     e.preventDefault()
@@ -27,12 +51,72 @@ export default function Credentials() {
     <div>
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-lg font-semibold text-slate-900">Credentials</h1>
-        <button
-          onClick={() => setShowForm(!showForm)}
-          className={showForm ? 'btn-secondary' : 'btn-primary'}
-        >
-          {showForm ? 'Cancel' : 'Add Credential'}
-        </button>
+
+        {showForm ? (
+          <button
+            onClick={() => { setShowForm(false); setForm({ name: '', env_var: '', value: '', description: '' }) }}
+            className="btn-secondary"
+          >
+            Cancel
+          </button>
+        ) : (
+          <div className="relative" ref={dropdownRef}>
+            <div className="inline-flex rounded-md">
+              <button
+                onClick={() => { setShowForm(true); setShowDropdown(false) }}
+                className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-slate-800 rounded-l-md hover:bg-slate-700 transition-colors"
+              >
+                Add Credential
+              </button>
+              <button
+                onClick={() => setShowDropdown(!showDropdown)}
+                className="inline-flex items-center px-2.5 py-2 text-white bg-slate-800 border-l border-slate-600 rounded-r-md hover:bg-slate-700 transition-colors"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+                </svg>
+              </button>
+            </div>
+
+            {showDropdown && (
+              <div className="absolute right-0 mt-1 w-72 bg-white border border-slate-200 rounded-lg shadow-lg z-50 py-1 max-h-[70vh] overflow-y-auto">
+                <div className="px-3 py-2 border-b border-slate-100">
+                  <p className="text-xs font-medium text-slate-400 uppercase tracking-wide">Add Provider Key</p>
+                </div>
+                {providerEntries.map(([key, provider]) => (
+                  <div key={key}>
+                    <div className="px-3 pt-2.5 pb-1">
+                      <span className="text-xs font-semibold text-slate-900">{provider.label}</span>
+                    </div>
+                    {provider.envVars.map((env) => {
+                      const configured = configuredVars.has(env)
+                      return (
+                        <button
+                          key={env}
+                          type="button"
+                          onClick={() => !configured && fillFromEnvVar(env)}
+                          disabled={configured}
+                          className={`w-full text-left px-3 py-1.5 text-sm flex items-center justify-between ${
+                            configured
+                              ? 'text-slate-400 cursor-default'
+                              : 'text-slate-700 hover:bg-slate-50 cursor-pointer'
+                          }`}
+                        >
+                          <span className="font-mono text-xs">{env}</span>
+                          {configured && (
+                            <svg className="w-3.5 h-3.5 text-teal-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                            </svg>
+                          )}
+                        </button>
+                      )
+                    })}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {error && (
