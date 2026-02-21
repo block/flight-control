@@ -6,6 +6,7 @@ class WorkerSettings(BaseSettings):
     api_key: str = "admin"
     worker_name: str = ""
     labels: str = ""  # comma-separated key=value pairs
+    workspace_id: str = "default"
     poll_interval: int = 5  # seconds
     heartbeat_interval: int = 30  # seconds
     log_batch_interval: int = 2  # seconds

@@ -45,6 +45,7 @@ class JobDefinitionUpdate(BaseModel):
 
 class JobDefinitionResponse(BaseModel):
     id: str
+    workspace_id: str
     name: str
     description: str | None = None
     task_prompt: str

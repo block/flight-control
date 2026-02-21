@@ -28,7 +28,7 @@ async def main():
                 labels[k.strip()] = v.strip()
 
     # Register
-    logger.info(f"Registering worker '{worker_name}' with server {settings.server_url}")
+    logger.info(f"Registering worker '{worker_name}' with server {settings.server_url} (workspace: {settings.workspace_id})")
     try:
         result = await client.register(worker_name, labels)
         worker_id = result["id"]

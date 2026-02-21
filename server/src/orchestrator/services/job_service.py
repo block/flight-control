@@ -6,22 +6,26 @@ from orchestrator.models.job_run import JobRun
 from orchestrator.schemas.jobs import JobDefinitionCreate, JobDefinitionUpdate
 
 
-async def list_jobs(db: AsyncSession) -> list[JobDefinition]:
+async def list_jobs(db: AsyncSession, workspace_id: str) -> list[JobDefinition]:
     result = await db.execute(
-        select(JobDefinition).order_by(JobDefinition.created_at.desc())
+        select(JobDefinition)
+        .where(JobDefinition.workspace_id == workspace_id)
+        .order_by(JobDefinition.created_at.desc())
     )
     return list(result.scalars().all())
 
 
-async def get_job(db: AsyncSession, job_id: str) -> JobDefinition | None:
-    result = await db.execute(
-        select(JobDefinition).where(JobDefinition.id == job_id)
-    )
+async def get_job(db: AsyncSession, job_id: str, workspace_id: str | None = None) -> JobDefinition | None:
+    query = select(JobDefinition).where(JobDefinition.id == job_id)
+    if workspace_id:
+        query = query.where(JobDefinition.workspace_id == workspace_id)
+    result = await db.execute(query)
     return result.scalar_one_or_none()
 
 
-async def create_job(db: AsyncSession, data: JobDefinitionCreate) -> JobDefinition:
+async def create_job(db: AsyncSession, data: JobDefinitionCreate, workspace_id: str) -> JobDefinition:
     job = JobDefinition(
+        workspace_id=workspace_id,
         name=data.name,
         description=data.description,
         task_prompt=data.task_prompt,
@@ -40,9 +44,9 @@ async def create_job(db: AsyncSession, data: JobDefinitionCreate) -> JobDefiniti
 
 
 async def update_job(
-    db: AsyncSession, job_id: str, data: JobDefinitionUpdate
+    db: AsyncSession, job_id: str, data: JobDefinitionUpdate, workspace_id: str
 ) -> JobDefinition | None:
-    job = await get_job(db, job_id)
+    job = await get_job(db, job_id, workspace_id)
     if not job:
         return None
     update_data = data.model_dump(exclude_unset=True)
@@ -57,8 +61,8 @@ async def update_job(
     return job
 
 
-async def delete_job(db: AsyncSession, job_id: str) -> bool:
-    job = await get_job(db, job_id)
+async def delete_job(db: AsyncSession, job_id: str, workspace_id: str) -> bool:
+    job = await get_job(db, job_id, workspace_id)
     if not job:
         return False
     await db.delete(job)
@@ -66,13 +70,14 @@ async def delete_job(db: AsyncSession, job_id: str) -> bool:
     return True
 
 
-async def trigger_run(db: AsyncSession, job_id: str) -> JobRun:
+async def trigger_run(db: AsyncSession, job_id: str, workspace_id: str | None = None) -> JobRun:
     """Create a run from a saved job definition (snapshot config)."""
-    job = await get_job(db, job_id)
+    job = await get_job(db, job_id, workspace_id)
     if not job:
         raise ValueError(f"Job {job_id} not found")
 
     run = JobRun(
+        workspace_id=job.workspace_id,
         job_definition_id=job.id,
         name=job.name,
         task_prompt=job.task_prompt,

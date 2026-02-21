@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta, timezone
+from datetime import timedelta
 
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -12,8 +12,8 @@ from orchestrator.models.worker import Worker
 from orchestrator.schemas.workers import PollResponse, WorkerRegisterRequest
 
 
-async def register_worker(db: AsyncSession, data: WorkerRegisterRequest) -> Worker:
-    worker = Worker(name=data.name, labels=data.labels)
+async def register_worker(db: AsyncSession, data: WorkerRegisterRequest, workspace_id: str) -> Worker:
+    worker = Worker(workspace_id=workspace_id, name=data.name, labels=data.labels)
     db.add(worker)
     await db.commit()
     await db.refresh(worker)
@@ -46,19 +46,18 @@ def labels_match(required_labels: dict | None, worker_labels: dict | None) -> bo
 
 
 async def poll_for_job(db: AsyncSession, worker_id: str) -> PollResponse | None:
-    """Atomically assign a queued job to this worker, respecting label constraints."""
-    # Get worker's labels first
+    """Atomically assign a queued job to this worker, respecting label and workspace constraints."""
+    # Get worker first (needed for labels and workspace scoping)
     worker_result = await db.execute(select(Worker).where(Worker.id == worker_id))
     worker = worker_result.scalar_one_or_none()
     if not worker:
         return None
     worker_labels = worker.labels or {}
 
-    # Find oldest queued runs and match labels in Python
-    # (JSON label matching can't be done portably in SQL across SQLite/Postgres)
+    # Find oldest queued runs in the worker's workspace and match labels in Python
     result = await db.execute(
         select(JobRun)
-        .where(JobRun.status == "queued")
+        .where(JobRun.status == "queued", JobRun.workspace_id == worker.workspace_id)
         .order_by(JobRun.created_at.asc())
     )
     run = None
@@ -94,11 +93,14 @@ async def poll_for_job(db: AsyncSession, worker_id: str) -> PollResponse | None:
     result = await db.execute(select(JobRun).where(JobRun.id == run.id))
     run = result.scalar_one_or_none()
 
-    # Decrypt credentials
+    # Decrypt credentials (scoped to workspace)
     credentials: dict[str, str] = {}
     if run.credential_ids:
         cred_result = await db.execute(
-            select(Credential).where(Credential.name.in_(run.credential_ids))
+            select(Credential).where(
+                Credential.name.in_(run.credential_ids),
+                Credential.workspace_id == worker.workspace_id,
+            )
         )
         for cred in cred_result.scalars().all():
             try:
@@ -149,8 +151,12 @@ async def complete_run(
     return run
 
 
-async def list_workers(db: AsyncSession) -> list[Worker]:
-    result = await db.execute(select(Worker).order_by(Worker.created_at.desc()))
+async def list_workers(db: AsyncSession, workspace_id: str) -> list[Worker]:
+    result = await db.execute(
+        select(Worker)
+        .where(Worker.workspace_id == workspace_id)
+        .order_by(Worker.created_at.desc())
+    )
     workers = list(result.scalars().all())
 
     # Mark stale workers as offline based on heartbeat timeout

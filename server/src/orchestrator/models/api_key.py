@@ -11,3 +11,4 @@ class ApiKey(Base, TimestampMixin):
     name: Mapped[str] = mapped_column(String, nullable=False)
     key_hash: Mapped[str] = mapped_column(String, unique=True, nullable=False)
     role: Mapped[str] = mapped_column(String, default="worker")  # admin, worker
+    user_id: Mapped[str | None] = mapped_column(String, nullable=True, index=True)

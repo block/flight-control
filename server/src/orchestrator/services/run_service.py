@@ -6,9 +6,9 @@ from orchestrator.schemas.runs import RunCreate
 
 
 async def list_runs(
-    db: AsyncSession, job_id: str | None = None, status: str | None = None
+    db: AsyncSession, workspace_id: str, job_id: str | None = None, status: str | None = None
 ) -> list[JobRun]:
-    query = select(JobRun).order_by(JobRun.created_at.desc())
+    query = select(JobRun).where(JobRun.workspace_id == workspace_id).order_by(JobRun.created_at.desc())
     if job_id:
         query = query.where(JobRun.job_definition_id == job_id)
     if status:
@@ -17,13 +17,17 @@ async def list_runs(
     return list(result.scalars().all())
 
 
-async def get_run(db: AsyncSession, run_id: str) -> JobRun | None:
-    result = await db.execute(select(JobRun).where(JobRun.id == run_id))
+async def get_run(db: AsyncSession, run_id: str, workspace_id: str | None = None) -> JobRun | None:
+    query = select(JobRun).where(JobRun.id == run_id)
+    if workspace_id:
+        query = query.where(JobRun.workspace_id == workspace_id)
+    result = await db.execute(query)
     return result.scalar_one_or_none()
 
 
-async def create_adhoc_run(db: AsyncSession, data: RunCreate) -> JobRun:
+async def create_adhoc_run(db: AsyncSession, data: RunCreate, workspace_id: str) -> JobRun:
     run = JobRun(
+        workspace_id=workspace_id,
         name=data.name,
         task_prompt=data.task_prompt,
         agent_type=data.agent_type,
@@ -40,8 +44,8 @@ async def create_adhoc_run(db: AsyncSession, data: RunCreate) -> JobRun:
     return run
 
 
-async def cancel_run(db: AsyncSession, run_id: str) -> JobRun | None:
-    run = await get_run(db, run_id)
+async def cancel_run(db: AsyncSession, run_id: str, workspace_id: str) -> JobRun | None:
+    run = await get_run(db, run_id, workspace_id)
     if not run or run.status not in ("queued", "assigned", "running"):
         return None
     run.status = "cancelled"

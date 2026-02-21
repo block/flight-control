@@ -1,10 +1,15 @@
 const API_BASE = '/api/v1'
 
+export function getWorkspaceId() {
+  return localStorage.getItem('workspace_id') || 'default'
+}
+
 function getHeaders() {
   const token = localStorage.getItem('api_key') || 'admin'
   return {
     'Content-Type': 'application/json',
     Authorization: `Bearer ${token}`,
+    'X-Workspace-ID': getWorkspaceId(),
   }
 }
 
@@ -43,7 +48,10 @@ export const api = {
   downloadArtifact: async (runId, artifactId, filename) => {
     const token = localStorage.getItem('api_key') || 'admin'
     const res = await fetch(`${API_BASE}/runs/${runId}/artifacts/${artifactId}`, {
-      headers: { Authorization: `Bearer ${token}` },
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'X-Workspace-ID': getWorkspaceId(),
+      },
     })
     if (!res.ok) throw new Error(`${res.status}: ${await res.text()}`)
     const blob = await res.blob()
@@ -71,4 +79,11 @@ export const api = {
   health: () => request('/health'),
   listWorkers: () => request('/system/workers'),
   getMetrics: () => request('/system/metrics'),
+
+  // Workspaces
+  listWorkspaces: () => request('/workspaces'),
+  createWorkspace: (data) => request('/workspaces', { method: 'POST', body: JSON.stringify(data) }),
+  getWorkspace: (id) => request(`/workspaces/${id}`),
+  getWorkspaceMembers: (id) => request(`/workspaces/${id}/members`),
+  getCurrentUser: () => request('/users/me'),
 }

@@ -10,6 +10,7 @@ class Worker(Base, TimestampMixin):
     __tablename__ = "workers"
 
     id: Mapped[str] = mapped_column(String, primary_key=True, default=new_id)
+    workspace_id: Mapped[str] = mapped_column(String, nullable=False, index=True, default="default")
     name: Mapped[str] = mapped_column(String, nullable=False)
     status: Mapped[str] = mapped_column(String, default="online")  # online, offline, busy
     labels: Mapped[dict | None] = mapped_column(JSON, default=dict)

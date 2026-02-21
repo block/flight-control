@@ -30,6 +30,7 @@ services:
     environment:
       - ORCH_SERVER_URL=http://server:8080
       - ORCH_API_KEY=${ORCH_DEFAULT_ADMIN_KEY:-admin}
+      - ORCH_WORKSPACE_ID=default
     depends_on:
       - server
     restart: unless-stopped

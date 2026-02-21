@@ -7,10 +7,12 @@ export default function LogViewer({ runId, isActive }) {
   const bottomRef = useRef(null)
   const containerRef = useRef(null)
 
-  // Fetch initial logs
+  // Fetch logs from artifact on mount and when run completes
   useEffect(() => {
-    api.getRunLogs(runId).then(setLogs).catch(() => {})
-  }, [runId])
+    api.getRunLogs(runId).then((fetched) => {
+      setLogs((prev) => fetched.length > 0 ? fetched : prev)
+    }).catch(() => {})
+  }, [runId, isActive])
 
   // SSE for live streaming
   useEffect(() => {

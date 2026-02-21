@@ -14,10 +14,11 @@ def compute_next_run(cron_expression: str, base_time: datetime | None = None) ->
     return croniter(cron_expression, base).get_next(datetime).replace(tzinfo=timezone.utc)
 
 
-async def list_schedules(db: AsyncSession) -> list[ScheduleResponse]:
+async def list_schedules(db: AsyncSession, workspace_id: str) -> list[ScheduleResponse]:
     result = await db.execute(
         select(Schedule, JobDefinition.name.label("job_name"))
         .outerjoin(JobDefinition, Schedule.job_definition_id == JobDefinition.id)
+        .where(Schedule.workspace_id == workspace_id)
         .order_by(Schedule.created_at.desc())
     )
     rows = result.all()
@@ -29,18 +30,20 @@ async def list_schedules(db: AsyncSession) -> list[ScheduleResponse]:
     return schedules
 
 
-async def get_schedule(db: AsyncSession, schedule_id: str) -> Schedule | None:
-    result = await db.execute(
-        select(Schedule).where(Schedule.id == schedule_id)
-    )
+async def get_schedule(db: AsyncSession, schedule_id: str, workspace_id: str | None = None) -> Schedule | None:
+    query = select(Schedule).where(Schedule.id == schedule_id)
+    if workspace_id:
+        query = query.where(Schedule.workspace_id == workspace_id)
+    result = await db.execute(query)
     return result.scalar_one_or_none()
 
 
-async def create_schedule(db: AsyncSession, data: ScheduleCreate) -> Schedule:
+async def create_schedule(db: AsyncSession, data: ScheduleCreate, workspace_id: str) -> Schedule:
     if not croniter.is_valid(data.cron_expression):
         raise ValueError(f"Invalid cron expression: {data.cron_expression}")
 
     schedule = Schedule(
+        workspace_id=workspace_id,
         job_definition_id=data.job_definition_id,
         cron_expression=data.cron_expression,
         enabled=data.enabled,
@@ -56,9 +59,9 @@ async def create_schedule(db: AsyncSession, data: ScheduleCreate) -> Schedule:
 
 
 async def update_schedule(
-    db: AsyncSession, schedule_id: str, data: ScheduleUpdate
+    db: AsyncSession, schedule_id: str, data: ScheduleUpdate, workspace_id: str
 ) -> Schedule | None:
-    schedule = await get_schedule(db, schedule_id)
+    schedule = await get_schedule(db, schedule_id, workspace_id)
     if not schedule:
         return None
 
@@ -82,8 +85,8 @@ async def update_schedule(
     return schedule
 
 
-async def delete_schedule(db: AsyncSession, schedule_id: str) -> bool:
-    schedule = await get_schedule(db, schedule_id)
+async def delete_schedule(db: AsyncSession, schedule_id: str, workspace_id: str) -> bool:
+    schedule = await get_schedule(db, schedule_id, workspace_id)
     if not schedule:
         return False
     await db.delete(schedule)

@@ -42,6 +42,7 @@ class LogLine(BaseModel):
 
 class WorkerResponse(BaseModel):
     id: str
+    workspace_id: str
     name: str
     status: str
     labels: dict = {}

@@ -7,6 +7,7 @@ import Workers from './pages/Workers'
 import Credentials from './pages/Credentials'
 import Schedules from './pages/Schedules'
 import NewRun from './pages/NewRun'
+import WorkspacePicker from './components/WorkspacePicker'
 
 const navItems = [
   { path: '/', label: 'Dashboard' },
@@ -50,6 +51,9 @@ export default function App() {
                   </Link>
                 )
               })}
+            </div>
+            <div className="ml-auto">
+              <WorkspacePicker />
             </div>
           </div>
         </div>

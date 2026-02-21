@@ -13,6 +13,7 @@ async def save_artifact(
     filename: str,
     data: bytes,
     content_type: str,
+    workspace_id: str = "default",
 ) -> Artifact:
     checksum = hashlib.sha256(data).hexdigest()
     storage_path = f"{run_id}/{filename}"
@@ -21,6 +22,7 @@ async def save_artifact(
     await storage.save(storage_path, data)
 
     artifact = Artifact(
+        workspace_id=workspace_id,
         run_id=run_id,
         filename=filename,
         content_type=content_type,

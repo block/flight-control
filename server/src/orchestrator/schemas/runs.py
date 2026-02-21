@@ -18,6 +18,7 @@ class RunCreate(BaseModel):
 
 class RunResponse(BaseModel):
     id: str
+    workspace_id: str
     job_definition_id: str | None = None
     status: str
     worker_id: str | None = None

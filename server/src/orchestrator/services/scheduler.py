@@ -41,7 +41,7 @@ async def _tick():
 
         for schedule in due_schedules:
             try:
-                run = await job_service.trigger_run(db, schedule.job_definition_id)
+                run = await job_service.trigger_run(db, schedule.job_definition_id, workspace_id=schedule.workspace_id)
                 schedule.last_run_at = now
                 schedule.last_run_id = run.id
                 logger.info(

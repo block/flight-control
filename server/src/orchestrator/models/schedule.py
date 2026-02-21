@@ -10,6 +10,7 @@ class Schedule(Base, TimestampMixin):
     __tablename__ = "schedules"
 
     id: Mapped[str] = mapped_column(String, primary_key=True, default=new_id)
+    workspace_id: Mapped[str] = mapped_column(String, nullable=False, index=True, default="default")
     job_definition_id: Mapped[str] = mapped_column(String, nullable=False)
     cron_expression: Mapped[str] = mapped_column(String, nullable=False)
     enabled: Mapped[bool] = mapped_column(Boolean, default=True)

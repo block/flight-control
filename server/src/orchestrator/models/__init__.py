@@ -7,6 +7,9 @@ from orchestrator.models.credential import Credential
 from orchestrator.models.schedule import Schedule
 from orchestrator.models.api_key import ApiKey
 from orchestrator.models.artifact import Artifact
+from orchestrator.models.user import User
+from orchestrator.models.workspace import Workspace
+from orchestrator.models.workspace_member import WorkspaceMember
 
 __all__ = [
     "Base",
@@ -18,4 +21,7 @@ __all__ = [
     "Schedule",
     "ApiKey",
     "Artifact",
+    "User",
+    "Workspace",
+    "WorkspaceMember",
 ]

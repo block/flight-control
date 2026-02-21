@@ -6,7 +6,10 @@ from orchestrator_worker.config import settings
 class ServerClient:
     def __init__(self):
         self.base_url = f"{settings.server_url}/api/v1"
-        self.headers = {"Authorization": f"Bearer {settings.api_key}"}
+        self.headers = {
+            "Authorization": f"Bearer {settings.api_key}",
+            "X-Workspace-ID": settings.workspace_id,
+        }
 
     def _client(self) -> httpx.AsyncClient:
         return httpx.AsyncClient(

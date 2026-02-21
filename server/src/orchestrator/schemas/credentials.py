@@ -19,6 +19,7 @@ class CredentialUpdate(BaseModel):
 
 class CredentialResponse(BaseModel):
     id: str
+    workspace_id: str
     name: str
     env_var: str
     description: str | None = None

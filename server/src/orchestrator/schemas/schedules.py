@@ -18,6 +18,7 @@ class ScheduleUpdate(BaseModel):
 
 class ScheduleResponse(BaseModel):
     id: str
+    workspace_id: str
     job_definition_id: str
     cron_expression: str
     enabled: bool

@@ -10,6 +10,7 @@ class JobRun(Base, TimestampMixin):
     __tablename__ = "job_runs"
 
     id: Mapped[str] = mapped_column(String, primary_key=True, default=new_id)
+    workspace_id: Mapped[str] = mapped_column(String, nullable=False, index=True, default="default")
     job_definition_id: Mapped[str | None] = mapped_column(String, nullable=True)  # null for ad-hoc runs
     status: Mapped[str] = mapped_column(String, default="queued")  # queued, assigned, running, completed, failed, timeout, cancelled
     worker_id: Mapped[str | None] = mapped_column(String, nullable=True)

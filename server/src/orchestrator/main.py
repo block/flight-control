@@ -9,8 +9,7 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
 from orchestrator.config import settings
-from orchestrator.database import engine
-from orchestrator.models import Base
+from orchestrator.migrate import run_migrations
 
 logger = logging.getLogger(__name__)
 
@@ -27,10 +26,16 @@ for _p in [
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Create tables on startup
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-    logger.info("Database tables created")
+    # Run Alembic migrations on startup (creates tables + applies schema changes)
+    run_migrations()
+    logger.info("Database migrations applied")
+
+    # Ensure default workspace and admin user exist
+    from orchestrator.database import async_session
+    from orchestrator.services import workspace_service
+
+    async with async_session() as db:
+        await workspace_service.ensure_defaults(db)
 
     # Start scheduler background task
     from orchestrator.services.scheduler import run_scheduler
@@ -62,7 +67,7 @@ app.add_middleware(
 )
 
 # Register API routers
-from orchestrator.api import credentials, jobs, runs, schedules, system, workers
+from orchestrator.api import credentials, jobs, runs, schedules, system, workers, workspaces
 
 app.include_router(jobs.router, prefix="/api/v1")
 app.include_router(runs.router, prefix="/api/v1")
@@ -70,6 +75,7 @@ app.include_router(workers.router, prefix="/api/v1")
 app.include_router(credentials.router, prefix="/api/v1")
 app.include_router(schedules.router, prefix="/api/v1")
 app.include_router(system.router, prefix="/api/v1")
+app.include_router(workspaces.router, prefix="/api/v1")
 
 # Serve static UI files with SPA fallback
 if _ui_dir:

@@ -48,16 +48,17 @@ class TestLabelsMatch:
 # Integration tests for poll_for_job label routing
 # ---------------------------------------------------------------------------
 
-async def _create_worker(db, name, labels=None):
-    worker = Worker(name=name, labels=labels or {})
+async def _create_worker(db, name, labels=None, workspace_id="default"):
+    worker = Worker(workspace_id=workspace_id, name=name, labels=labels or {})
     db.add(worker)
     await db.commit()
     await db.refresh(worker)
     return worker
 
 
-async def _create_run(db, name="test-job", required_labels=None):
+async def _create_run(db, name="test-job", required_labels=None, workspace_id="default"):
     run = JobRun(
+        workspace_id=workspace_id,
         name=name,
         task_prompt="do something",
         agent_type="goose",
@@ -147,3 +148,23 @@ class TestPollForJobRouting:
         await _create_run(db, required_labels=None)
         result = await poll_for_job(db, "nonexistent-worker-id")
         assert result is None
+
+    @pytest.mark.asyncio
+    async def test_worker_only_polls_own_workspace(self, db):
+        """Workers should only pick up runs from their own workspace."""
+        worker = await _create_worker(db, "ws1-worker", workspace_id="default")
+        # Run in a different workspace
+        await _create_run(db, name="other-ws-job", workspace_id="other-ws")
+
+        result = await poll_for_job(db, worker.id)
+        assert result is None
+
+    @pytest.mark.asyncio
+    async def test_worker_picks_up_own_workspace_run(self, db):
+        """Workers should pick up runs from their own workspace."""
+        worker = await _create_worker(db, "ws1-worker", workspace_id="default")
+        run = await _create_run(db, name="same-ws-job", workspace_id="default")
+
+        result = await poll_for_job(db, worker.id)
+        assert result is not None
+        assert result.run_id == run.id

@@ -8,6 +8,7 @@ class JobDefinition(Base, TimestampMixin):
     __tablename__ = "job_definitions"
 
     id: Mapped[str] = mapped_column(String, primary_key=True, default=new_id)
+    workspace_id: Mapped[str] = mapped_column(String, nullable=False, index=True, default="default")
     name: Mapped[str] = mapped_column(String, nullable=False)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
     task_prompt: Mapped[str] = mapped_column(Text, nullable=False)
