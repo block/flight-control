@@ -1,0 +1,40 @@
+services:
+  server:
+    build:
+      context: .
+      dockerfile: server/Dockerfile
+      args:
+        CA_CERT: "${CA_CERT:-}"
+        PIP_INDEX_URL: "${PIP_INDEX_URL:-}"
+        PIP_TRUSTED_HOST: "${PIP_TRUSTED_HOST:-}"
+        NPM_REGISTRY: "${NPM_REGISTRY:-}"
+    ports:
+      - "8080:8080"
+    environment:
+      - ORCH_DATABASE_URL=sqlite+aiosqlite:///./data/orchestrator.db
+      - ORCH_MASTER_KEY=${ORCH_MASTER_KEY:-}
+      - ORCH_DEFAULT_ADMIN_KEY=${ORCH_DEFAULT_ADMIN_KEY:-admin}
+    volumes:
+      - server-data:/app/data
+    restart: unless-stopped
+
+  worker:
+    build:
+      context: .
+      dockerfile: worker/Dockerfile
+      args:
+        CA_CERT: "${CA_CERT:-}"
+        PIP_INDEX_URL: "${PIP_INDEX_URL:-}"
+        PIP_TRUSTED_HOST: "${PIP_TRUSTED_HOST:-}"
+        NPM_REGISTRY: "${NPM_REGISTRY:-}"
+    environment:
+      - ORCH_SERVER_URL=http://server:8080
+      - ORCH_API_KEY=${ORCH_DEFAULT_ADMIN_KEY:-admin}
+    depends_on:
+      - server
+    restart: unless-stopped
+    deploy:
+      replicas: 2
+
+volumes:
+  server-data:

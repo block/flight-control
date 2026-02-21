@@ -1,0 +1,16 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.eggs/
+*.db
+node_modules/
+ui/dist/
+.env
+.venv/
+venv/
+data/
+*.sqlite
+.DS_Store
+corp-ca.crt
