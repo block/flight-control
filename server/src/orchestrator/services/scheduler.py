@@ -1,6 +1,6 @@
 import asyncio
 import logging
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from sqlalchemy import select
 
@@ -29,7 +29,7 @@ async def _initialize_next_run_times():
 
 async def _tick():
     """Fire all schedules that are due."""
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     async with async_session() as db:
         result = await db.execute(
             select(Schedule).where(

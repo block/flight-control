@@ -13,7 +13,12 @@ from orchestrator.schemas.workers import (
     WorkerRegisterRequest,
     WorkerRegisterResponse,
 )
-from orchestrator.services import artifact_service, log_service, skill_service, worker_service
+from orchestrator.services import (
+    artifact_service,
+    log_service,
+    skill_service,
+    worker_service,
+)
 
 router = APIRouter(prefix="/workers", tags=["workers"])
 

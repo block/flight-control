@@ -1,3 +1,4 @@
+import contextlib
 from datetime import timedelta
 
 from sqlalchemy import select, update
@@ -11,7 +12,12 @@ from orchestrator.models.job_run import JobRun
 from orchestrator.models.skill import Skill
 from orchestrator.models.skill_file import SkillFile
 from orchestrator.models.worker import Worker
-from orchestrator.schemas.workers import PollResponse, SkillFilePollInfo, SkillPollInfo, WorkerRegisterRequest
+from orchestrator.schemas.workers import (
+    PollResponse,
+    SkillFilePollInfo,
+    SkillPollInfo,
+    WorkerRegisterRequest,
+)
 
 
 async def register_worker(db: AsyncSession, data: WorkerRegisterRequest, workspace_id: str) -> Worker:
@@ -79,7 +85,7 @@ async def poll_for_job(db: AsyncSession, worker_id: str) -> PollResponse | None:
     )
 
     # If another worker already grabbed it, rowcount will be 0
-    if assign_result.rowcount == 0:
+    if assign_result.rowcount == 0:  # type: ignore[union-attr]
         return None
 
     # Update worker status
@@ -94,6 +100,8 @@ async def poll_for_job(db: AsyncSession, worker_id: str) -> PollResponse | None:
     # Re-fetch the run to get the updated state
     result = await db.execute(select(JobRun).where(JobRun.id == run.id))
     run = result.scalar_one_or_none()
+    if not run:
+        return None
 
     # Decrypt credentials (scoped to workspace)
     credentials: dict[str, str] = {}
@@ -105,10 +113,8 @@ async def poll_for_job(db: AsyncSession, worker_id: str) -> PollResponse | None:
             )
         )
         for cred in cred_result.scalars().all():
-            try:
+            with contextlib.suppress(Exception):
                 credentials[cred.env_var] = decrypt_value(cred.encrypted_value)
-            except Exception:
-                pass  # Skip failed decryptions
 
     # Resolve skills (scoped to workspace)
     skill_poll_infos: list[SkillPollInfo] = []

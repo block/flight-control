@@ -122,7 +122,7 @@ async def stream_logs(
                             {"stream": line.stream, "line": line.line, "sequence": line.sequence}
                         ),
                     }
-                except asyncio.TimeoutError:
+                except TimeoutError:
                     yield {"event": "ping", "data": ""}
         except asyncio.CancelledError:
             pass

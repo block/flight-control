@@ -1,12 +1,12 @@
-.PHONY: dev dev-server dev-worker dev-ui build up run fresh down logs test
+.PHONY: dev dev-server dev-worker dev-ui build up run fresh down logs test lint
 
 # ── Development (local, no Docker) ──────────────────────────────
 
 dev-server: ## Install server deps and start FastAPI with hot-reload on :8080
-	cd server && pip install -e ".[dev]" && uvicorn orchestrator.main:app --reload --port 8080
+	cd server && uv run uvicorn orchestrator.main:app --reload --port 8080
 
 dev-worker: ## Install worker deps and start the worker poll loop
-	cd worker && pip install -e ".[dev]" && python -m orchestrator_worker.main
+	cd worker && uv run python -m orchestrator_worker.main
 
 dev-ui: ## Install UI deps and start Vite dev server on :3000
 	cd ui && npm install && npm run dev
@@ -41,13 +41,17 @@ scale-workers: ## Scale worker fleet to 5 instances
 # ── Database ─────────────────────────────────────────────────────
 
 db-migrate: ## Run pending Alembic migrations
-	cd server && alembic upgrade head
+	cd server && uv run alembic upgrade head
 
 db-revision: ## Auto-generate a new migration (usage: make db-revision msg="description")
-	cd server && alembic revision --autogenerate -m "$(msg)"
+	cd server && uv run alembic revision --autogenerate -m "$(msg)"
 
-# ── Test ─────────────────────────────────────────────────────────
+# ── Quality ───────────────────────────────────────────────────────
+
+lint: ## Run type checking and linting (pyright + ruff)
+	cd server && uv run ruff check src/
+	cd server && uv run pyright src/
 
 test: ## Run pytest for server and worker
-	cd server && pytest
-	cd worker && pytest
+	cd server && uv run pytest
+	cd worker && uv run pytest

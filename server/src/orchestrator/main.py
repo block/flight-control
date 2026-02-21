@@ -1,6 +1,6 @@
 import asyncio
 import logging
-from contextlib import asynccontextmanager
+from contextlib import asynccontextmanager, suppress
 from pathlib import Path
 
 from fastapi import FastAPI, Request
@@ -8,7 +8,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
-from orchestrator.config import settings
 from orchestrator.migrate import run_migrations
 
 logger = logging.getLogger(__name__)
@@ -46,10 +45,8 @@ async def lifespan(app: FastAPI):
 
     # Shutdown scheduler
     scheduler_task.cancel()
-    try:
+    with suppress(asyncio.CancelledError):
         await scheduler_task
-    except asyncio.CancelledError:
-        pass
 
 
 app = FastAPI(
@@ -67,7 +64,16 @@ app.add_middleware(
 )
 
 # Register API routers
-from orchestrator.api import credentials, jobs, runs, schedules, skills, system, workers, workspaces
+from orchestrator.api import (
+    credentials,
+    jobs,
+    runs,
+    schedules,
+    skills,
+    system,
+    workers,
+    workspaces,
+)
 
 app.include_router(jobs.router, prefix="/api/v1")
 app.include_router(runs.router, prefix="/api/v1")
@@ -84,11 +90,13 @@ if _ui_dir:
     app.mount("/assets", StaticFiles(directory=str(_ui_dir / "assets")), name="assets")
 
     # SPA catch-all: serve index.html for any non-API, non-asset route
+    _spa_dir = _ui_dir  # local binding for pyright narrowing
+
     @app.get("/{full_path:path}")
     async def serve_spa(request: Request, full_path: str):
         # Try to serve the exact file first (e.g., favicon.ico, robots.txt)
-        file_path = _ui_dir / full_path
+        file_path = _spa_dir / full_path
         if full_path and file_path.is_file():
             return FileResponse(file_path)
         # Otherwise serve index.html for client-side routing
-        return FileResponse(_ui_dir / "index.html")
+        return FileResponse(_spa_dir / "index.html")

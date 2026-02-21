@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from croniter import croniter
 from sqlalchemy import select
@@ -6,12 +6,16 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from orchestrator.models.job_definition import JobDefinition
 from orchestrator.models.schedule import Schedule
-from orchestrator.schemas.schedules import ScheduleCreate, ScheduleResponse, ScheduleUpdate
+from orchestrator.schemas.schedules import (
+    ScheduleCreate,
+    ScheduleResponse,
+    ScheduleUpdate,
+)
 
 
 def compute_next_run(cron_expression: str, base_time: datetime | None = None) -> datetime:
-    base = base_time or datetime.now(timezone.utc)
-    return croniter(cron_expression, base).get_next(datetime).replace(tzinfo=timezone.utc)
+    base = base_time or datetime.now(UTC)
+    return croniter(cron_expression, base).get_next(datetime).replace(tzinfo=UTC)
 
 
 async def list_schedules(db: AsyncSession, workspace_id: str) -> list[ScheduleResponse]:
@@ -67,9 +71,8 @@ async def update_schedule(
 
     update_data = data.model_dump(exclude_unset=True)
 
-    if "cron_expression" in update_data:
-        if not croniter.is_valid(update_data["cron_expression"]):
-            raise ValueError(f"Invalid cron expression: {update_data['cron_expression']}")
+    if "cron_expression" in update_data and not croniter.is_valid(update_data["cron_expression"]):
+        raise ValueError(f"Invalid cron expression: {update_data['cron_expression']}")
 
     for field, value in update_data.items():
         setattr(schedule, field, value)

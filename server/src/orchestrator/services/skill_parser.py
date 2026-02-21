@@ -1,10 +1,9 @@
 """Parser for SKILL.md files following the agentskills.io specification."""
 
 import re
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 import yaml
-
 
 # Skill name: lowercase alphanumeric + hyphens, no double hyphens, 1-64 chars
 SKILL_NAME_PATTERN = re.compile(r"^[a-z0-9]([a-z0-9-]{0,62}[a-z0-9])?$")
