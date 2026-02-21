@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from 'react'
-import { api } from '../lib/api'
+import { api, getWorkspaceId } from '../lib/api'
 
 export default function LogViewer({ runId, isActive }) {
   const [logs, setLogs] = useState([])
@@ -19,7 +19,8 @@ export default function LogViewer({ runId, isActive }) {
     if (!isActive) return
 
     const token = localStorage.getItem('api_key') || 'admin'
-    const es = new EventSource(`/api/v1/runs/${runId}/logs/stream`)
+    const params = new URLSearchParams({ token, workspace_id: getWorkspaceId() })
+    const es = new EventSource(`/api/v1/runs/${runId}/logs/stream?${params}`)
 
     es.addEventListener('log', (event) => {
       const data = JSON.parse(event.data)

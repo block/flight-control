@@ -1,7 +1,7 @@
 import hashlib
 from dataclasses import dataclass
 
-from fastapi import Depends, HTTPException, Request, Security
+from fastapi import Depends, HTTPException, Query, Request, Security
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -29,14 +29,8 @@ def hash_key(raw_key: str) -> str:
     return hashlib.sha256(raw_key.encode()).hexdigest()
 
 
-async def require_auth(
-    request: Request,
-    creds: HTTPAuthorizationCredentials = Security(security),
-    db: AsyncSession = Depends(get_db),
-) -> AuthContext:
-    token = creds.credentials
-    workspace_id = request.headers.get("X-Workspace-ID", DEFAULT_WORKSPACE_ID)
-
+async def _authenticate(token: str, workspace_id: str, db: AsyncSession) -> AuthContext:
+    """Core auth logic shared by header-based and query-param-based auth."""
     # Resolve API key and user
     if token == settings.default_admin_key:
         api_key = ApiKey(id="default", name="default-admin", role="admin", key_hash="", user_id=DEFAULT_ADMIN_USER_ID)
@@ -80,6 +74,25 @@ async def require_auth(
         )
 
     return AuthContext(user=user, api_key=api_key, workspace_id=workspace_id)
+
+
+async def require_auth(
+    request: Request,
+    creds: HTTPAuthorizationCredentials = Security(security),
+    db: AsyncSession = Depends(get_db),
+) -> AuthContext:
+    token = creds.credentials
+    workspace_id = request.headers.get("X-Workspace-ID", DEFAULT_WORKSPACE_ID)
+    return await _authenticate(token, workspace_id, db)
+
+
+async def require_auth_sse(
+    token: str = Query(..., description="API key for SSE auth"),
+    workspace_id: str = Query(DEFAULT_WORKSPACE_ID),
+    db: AsyncSession = Depends(get_db),
+) -> AuthContext:
+    """Auth for SSE endpoints where EventSource cannot send custom headers."""
+    return await _authenticate(token, workspace_id, db)
 
 
 async def require_admin(auth: AuthContext = Depends(require_auth)) -> AuthContext:

@@ -6,7 +6,7 @@ from fastapi.responses import Response
 from sqlalchemy.ext.asyncio import AsyncSession
 from sse_starlette.sse import EventSourceResponse
 
-from orchestrator.auth import AuthContext, require_auth
+from orchestrator.auth import AuthContext, require_auth, require_auth_sse
 from orchestrator.database import get_db
 from orchestrator.schemas.artifacts import ArtifactResponse
 from orchestrator.schemas.runs import RunCreate, RunResponse
@@ -102,7 +102,7 @@ async def get_logs(
 @router.get("/{run_id}/logs/stream")
 async def stream_logs(
     run_id: str,
-    auth: AuthContext = Depends(require_auth),
+    auth: AuthContext = Depends(require_auth_sse),
     db: AsyncSession = Depends(get_db),
 ):
     run = await run_service.get_run(db, run_id, auth.workspace_id)
