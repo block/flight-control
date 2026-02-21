@@ -6,10 +6,22 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Flight Control is a distributed control plane for AI agent workloads. It dispatches natural-language tasks across a fleet of worker nodes that run Goose agents, streaming results back in real time. Early prototype, localhost-only via Docker Compose.
 
+## First-Time Setup
+
+```bash
+# 1. Create .env from the example
+cp .env.example .env
+
+# 2. Generate a Fernet encryption key and set it in .env
+python3 -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
+# Paste the output as ORCH_MASTER_KEY in .env
+```
+
 ## Build & Dev Commands
 
 ```bash
 # Docker (full stack)
+make run                # build + up in one command
 make build              # docker compose build
 make up                 # docker compose up -d (server on :8080 + 2 workers)
 make down               # docker compose down

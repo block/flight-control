@@ -1,4 +1,4 @@
-.PHONY: dev dev-server dev-worker dev-ui build up down logs test
+.PHONY: dev dev-server dev-worker dev-ui build up run down logs test
 
 # Development
 dev-server:
@@ -13,6 +13,8 @@ dev-ui:
 # Docker
 build:
 	docker compose build
+
+run: build up
 
 up:
 	docker compose up -d
