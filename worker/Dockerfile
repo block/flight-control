@@ -30,6 +30,22 @@ RUN CONFIGURE=false curl -fsSL https://github.com/block/goose/releases/download/
 
 ENV PATH="/root/.local/bin:${PATH}"
 
+# Pre-configure Goose with developer extension enabled
+RUN mkdir -p /root/.config/goose && cat > /root/.config/goose/config.yaml <<'GOOSECONF'
+extensions:
+  developer:
+    enabled: true
+    type: builtin
+    name: developer
+    timeout: 300
+    bundled: true
+  todo:
+    enabled: true
+    type: platform
+    name: todo
+    bundled: true
+GOOSECONF
+
 # Install Python dependencies
 RUN pip install --no-cache-dir \
     "httpx>=0.27.0" \
