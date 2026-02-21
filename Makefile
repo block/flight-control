@@ -1,4 +1,4 @@
-.PHONY: dev dev-server dev-worker dev-ui build up run down logs test
+.PHONY: dev dev-server dev-worker dev-ui build up run fresh down logs test
 
 # Development
 dev-server:
@@ -16,7 +16,15 @@ build:
 
 run: build up
 
+fresh:
+	docker compose down -v
+	$(MAKE) build up
+
 up:
+	@# Kill leftover dev server on :8080 if present
+	@for pid in $$(lsof -i :8080 -t 2>/dev/null); do \
+		ps -o comm= -p $$pid 2>/dev/null | grep -q uvicorn && kill $$pid 2>/dev/null && echo "Killed dev server (pid $$pid)"; \
+	done; true
 	docker compose up -d
 
 down:
