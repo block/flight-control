@@ -31,6 +31,7 @@ async def create_adhoc_run(db: AsyncSession, data: RunCreate) -> JobRun:
         mcp_servers=data.mcp_servers,
         env_vars=data.env_vars,
         credential_ids=data.credential_ids,
+        required_labels=data.required_labels,
         timeout_seconds=data.timeout_seconds,
     )
     db.add(run)

@@ -81,6 +81,7 @@ async def trigger_run(db: AsyncSession, job_id: str) -> JobRun:
         mcp_servers=job.mcp_servers,
         env_vars=job.env_vars,
         credential_ids=job.credential_ids,
+        required_labels=job.labels,  # Copy job labels as required worker labels
         timeout_seconds=job.timeout_seconds,
     )
     db.add(run)
