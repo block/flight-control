@@ -48,6 +48,7 @@ async def execute_run(client: ServerClient, worker_id: str, job: dict) -> None:
                 credentials=job.get("credentials", {}),
                 work_dir=work_dir,
                 timeout_seconds=job.get("timeout_seconds", 1800),
+                run_id=run_id,
             ):
                 await streamer.add_line(stream, line)
                 captured_lines.append((stream, line))

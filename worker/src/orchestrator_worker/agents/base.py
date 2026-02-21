@@ -14,6 +14,7 @@ class AgentRunner(ABC):
         credentials: dict[str, str],
         work_dir: str,
         timeout_seconds: int,
+        run_id: str = "",
     ) -> AsyncIterator[tuple[str, str]]:
         """Run the agent. Yields (stream, line) tuples."""
         ...

@@ -4,6 +4,7 @@ import shutil
 from typing import AsyncIterator
 
 from orchestrator_worker.agents.base import AgentRunner
+from orchestrator_worker.config import settings
 from orchestrator_worker.config_writer import write_goose_config
 
 
@@ -20,11 +21,18 @@ class GooseRunner(AgentRunner):
         credentials: dict[str, str],
         work_dir: str,
         timeout_seconds: int,
+        run_id: str = "",
     ) -> AsyncIterator[tuple[str, str]]:
         # Build environment
         env = os.environ.copy()
         env.update(env_vars)
         env.update(credentials)
+
+        # Add artifact upload env vars so the agent can upload files
+        if run_id:
+            upload_url = f"{settings.server_url}/api/v1/workers/runs/{run_id}/artifacts"
+            env["FLIGHT_CONTROL_UPLOAD_URL"] = upload_url
+            env["FLIGHT_CONTROL_API_KEY"] = settings.api_key
 
         # Write MCP config
         config_path = write_goose_config(mcp_servers, work_dir)
@@ -41,10 +49,29 @@ class GooseRunner(AgentRunner):
         # Add task prompt
         cmd.extend(["-t", task_prompt])
 
-        # Add max turns if specified
-        max_turns = agent_config.get("max_turns")
-        if max_turns:
-            cmd.extend(["--max-turns", str(max_turns)])
+        # Add system prompt with platform context
+        if run_id:
+            system_prompt = (
+                "You are running inside Flight Control, a distributed agent orchestration platform.\n"
+                "\n"
+                "## Artifact uploads\n"
+                "\n"
+                "You can upload files as artifacts that will be stored and accessible via the dashboard.\n"
+                "To upload an artifact, use curl:\n"
+                "\n"
+                "curl -s -X POST \\\n"
+                '  -H "Authorization: Bearer $FLIGHT_CONTROL_API_KEY" \\\n'
+                '  -F "file=@<path-to-file>" \\\n'
+                '  "$FLIGHT_CONTROL_UPLOAD_URL"\n'
+                "\n"
+                "Upload any important output files, reports, generated assets, or results that should be\n"
+                "preserved beyond this run."
+            )
+            cmd.extend(["--system", system_prompt])
+
+        # Add max turns (default 30)
+        max_turns = agent_config.get("max_turns", 30)
+        cmd.extend(["--max-turns", str(max_turns)])
 
         # Pass provider/model as CLI flags too (more reliable than env vars)
         cmd.extend(["--provider", provider])
