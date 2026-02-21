@@ -18,3 +18,5 @@ class JobDefinition(Base, TimestampMixin):
     credential_ids: Mapped[list | None] = mapped_column(JSON, default=list)
     labels: Mapped[dict | None] = mapped_column(JSON, default=dict)
     timeout_seconds: Mapped[int] = mapped_column(Integer, default=1800)
+    max_retries: Mapped[int] = mapped_column(Integer, default=0)  # 0 = no retries
+    retry_backoff_seconds: Mapped[int] = mapped_column(Integer, default=60)  # Base backoff

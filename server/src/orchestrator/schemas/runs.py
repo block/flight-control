@@ -27,6 +27,10 @@ class RunResponse(BaseModel):
     mcp_servers: list = []
     credential_ids: list = []
     timeout_seconds: int
+    max_retries: int = 0
+    retry_backoff_seconds: int = 60
+    attempt_number: int = 1
+    parent_run_id: str | None = None
     started_at: datetime | None = None
     completed_at: datetime | None = None
     result: str | None = None

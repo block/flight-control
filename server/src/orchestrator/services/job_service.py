@@ -82,6 +82,8 @@ async def trigger_run(db: AsyncSession, job_id: str) -> JobRun:
         env_vars=job.env_vars,
         credential_ids=job.credential_ids,
         timeout_seconds=job.timeout_seconds,
+        max_retries=job.max_retries,
+        retry_backoff_seconds=job.retry_backoff_seconds,
     )
     db.add(run)
     await db.commit()

@@ -28,6 +28,8 @@ class JobDefinitionCreate(BaseModel):
     credential_ids: list[str] = []
     labels: dict[str, str] = {}
     timeout_seconds: int = 1800
+    max_retries: int = 0  # 0 = no retries
+    retry_backoff_seconds: int = 60  # Base backoff, doubles each attempt
 
 
 class JobDefinitionUpdate(BaseModel):
@@ -41,6 +43,8 @@ class JobDefinitionUpdate(BaseModel):
     credential_ids: list[str] | None = None
     labels: dict[str, str] | None = None
     timeout_seconds: int | None = None
+    max_retries: int | None = None
+    retry_backoff_seconds: int | None = None
 
 
 class JobDefinitionResponse(BaseModel):
@@ -55,6 +59,8 @@ class JobDefinitionResponse(BaseModel):
     credential_ids: list = []
     labels: dict = {}
     timeout_seconds: int
+    max_retries: int = 0
+    retry_backoff_seconds: int = 60
     created_at: datetime
     updated_at: datetime
 

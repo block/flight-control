@@ -23,6 +23,12 @@ class JobRun(Base, TimestampMixin):
     env_vars: Mapped[dict | None] = mapped_column(JSON, default=dict)
     credential_ids: Mapped[list | None] = mapped_column(JSON, default=list)
     timeout_seconds: Mapped[int] = mapped_column(Integer, default=1800)
+    
+    # Retry configuration (snapshotted from job definition)
+    max_retries: Mapped[int] = mapped_column(Integer, default=0)
+    retry_backoff_seconds: Mapped[int] = mapped_column(Integer, default=60)
+    attempt_number: Mapped[int] = mapped_column(Integer, default=1)
+    parent_run_id: Mapped[str | None] = mapped_column(String, nullable=True)  # Links retries
 
     started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)

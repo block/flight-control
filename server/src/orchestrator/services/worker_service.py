@@ -119,6 +119,32 @@ async def complete_run(
         worker.status = "online"
         worker.current_run_id = None
 
+    # Handle auto-retry for failed runs
+    retry_run = None
+    if status == "failed" and run.attempt_number < run.max_retries:
+        # Calculate exponential backoff: base * 2^attempt
+        backoff = run.retry_backoff_seconds * (2 ** (run.attempt_number - 1))
+        scheduled_at = utcnow() + timedelta(seconds=backoff)
+        
+        retry_run = JobRun(
+            job_definition_id=run.job_definition_id,
+            name=f"{run.name} (retry {run.attempt_number + 1})",
+            task_prompt=run.task_prompt,
+            agent_type=run.agent_type,
+            agent_config=run.agent_config,
+            mcp_servers=run.mcp_servers,
+            env_vars=run.env_vars,
+            credential_ids=run.credential_ids,
+            timeout_seconds=run.timeout_seconds,
+            max_retries=run.max_retries,
+            retry_backoff_seconds=run.retry_backoff_seconds,
+            attempt_number=run.attempt_number + 1,
+            parent_run_id=run.id,
+            # Note: scheduled_at would be used by a scheduler; for now it queues immediately
+            # A future enhancement could add a scheduled_at field and scheduler
+        )
+        db.add(retry_run)
+
     await db.commit()
     await db.refresh(run)
     return run
