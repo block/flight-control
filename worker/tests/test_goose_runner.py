@@ -64,6 +64,9 @@ async def test_basic_command_structure(tmp_path):
     assert cmd[0] == "goose"
     assert cmd[1] == "run"
     assert "--no-session" in cmd
+    assert "--output-format" in cmd
+    idx_fmt = cmd.index("--output-format")
+    assert cmd[idx_fmt + 1] == "stream-json"
     # Default max turns should always be present
     assert "--max-turns" in cmd
     assert "-t" in cmd

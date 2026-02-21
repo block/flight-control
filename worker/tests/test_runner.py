@@ -55,7 +55,7 @@ async def test_successful_run(mock_client):
         exit_code=0,
     )
 
-    with patch("orchestrator_worker.runner.GooseRunner", return_value=runner):
+    with patch("orchestrator_worker.runner.get_runner", return_value=runner):
         await execute_run(mock_client, "worker-1", _make_job())
 
     # Should upload log artifact
@@ -75,7 +75,7 @@ async def test_successful_run(mock_client):
 async def test_failed_run_nonzero_exit(mock_client):
     runner = _mock_runner(lines=[("stderr", "error occurred")], exit_code=1)
 
-    with patch("orchestrator_worker.runner.GooseRunner", return_value=runner):
+    with patch("orchestrator_worker.runner.get_runner", return_value=runner):
         await execute_run(mock_client, "worker-1", _make_job())
 
     call_kwargs = mock_client.complete_run.call_args[1]
@@ -87,7 +87,7 @@ async def test_failed_run_nonzero_exit(mock_client):
 async def test_exception_during_run(mock_client):
     runner = _mock_runner_that_raises(RuntimeError("boom"))
 
-    with patch("orchestrator_worker.runner.GooseRunner", return_value=runner):
+    with patch("orchestrator_worker.runner.get_runner", return_value=runner):
         await execute_run(mock_client, "worker-1", _make_job())
 
     # Should still upload log artifact
@@ -104,7 +104,7 @@ async def test_exception_during_run(mock_client):
 async def test_run_id_passed_to_agent(mock_client):
     runner = _mock_runner()
 
-    with patch("orchestrator_worker.runner.GooseRunner", return_value=runner):
+    with patch("orchestrator_worker.runner.get_runner", return_value=runner):
         await execute_run(mock_client, "worker-1", _make_job(run_id="run-xyz"))
 
     runner.run.assert_called_once()

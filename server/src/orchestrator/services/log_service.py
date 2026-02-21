@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 # In-memory subscribers for SSE log streaming
 _subscribers: dict[str, list[asyncio.Queue]] = defaultdict(list)
 
-_LOG_LINE_RE = re.compile(r"^\[(stdout|stderr)\] (.*)$")
+_LOG_LINE_RE = re.compile(r"^\[(stdout|stderr|event)\] (.*)$")
 
 
 @dataclass

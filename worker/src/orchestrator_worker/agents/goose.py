@@ -1,11 +1,15 @@
 import asyncio
+import json
+import logging
 import os
-import shutil
 from typing import AsyncIterator
 
 from orchestrator_worker.agents.base import AgentRunner
+from orchestrator_worker.agents.goose_parser import parse_goose_event
 from orchestrator_worker.config import settings
 from orchestrator_worker.config_writer import write_goose_config
+
+logger = logging.getLogger(__name__)
 
 
 class GooseRunner(AgentRunner):
@@ -44,7 +48,7 @@ class GooseRunner(AgentRunner):
         env["GOOSE_MODEL"] = model
 
         # Build goose command
-        cmd = ["goose", "run", "--no-session"]
+        cmd = ["goose", "run", "--no-session", "--output-format", "stream-json"]
 
         # Add task prompt
         cmd.extend(["-t", task_prompt])
@@ -94,22 +98,62 @@ class GooseRunner(AgentRunner):
             )
 
             # Read both streams concurrently using tasks
-            async def read_stream(stream, stream_name, queue):
+            async def read_stdout(stream, queue):
+                # Accumulator for merging per-token text messages
+                pending_msg = None  # {"event": AgentEvent, "id": str}
+
+                async def flush_pending():
+                    nonlocal pending_msg
+                    if pending_msg:
+                        await queue.put(("event", pending_msg["event"].to_json()))
+                        pending_msg = None
+
                 while True:
                     line = await stream.readline()
                     if not line:
                         break
                     text = line.decode("utf-8", errors="replace").rstrip()
-                    if text:  # Skip empty lines
-                        await queue.put((stream_name, text))
+                    if not text:
+                        continue
+                    try:
+                        for event in parse_goose_event(text):
+                            # Merge consecutive text tokens with the same id
+                            if event.type == "message" and event.content_type == "text" and event.id:
+                                if pending_msg and pending_msg["id"] == event.id:
+                                    pending_msg["event"].text += event.text
+                                else:
+                                    await flush_pending()
+                                    pending_msg = {"event": event, "id": event.id}
+                            else:
+                                await flush_pending()
+                                await queue.put(("event", event.to_json()))
+                    except json.JSONDecodeError:
+                        await flush_pending()
+                        await queue.put(("stdout", text))
+                    except Exception as exc:
+                        await flush_pending()
+                        logger.warning("Failed to parse goose event: %s", exc)
+                        await queue.put(("stdout", text))
+
+                await flush_pending()
+                await queue.put(None)  # Sentinel
+
+            async def read_stderr(stream, queue):
+                while True:
+                    line = await stream.readline()
+                    if not line:
+                        break
+                    text = line.decode("utf-8", errors="replace").rstrip()
+                    if text:
+                        await queue.put(("stderr", text))
                 await queue.put(None)  # Sentinel
 
             queue = asyncio.Queue()
             stdout_task = asyncio.create_task(
-                read_stream(process.stdout, "stdout", queue)
+                read_stdout(process.stdout, queue)
             )
             stderr_task = asyncio.create_task(
-                read_stream(process.stderr, "stderr", queue)
+                read_stderr(process.stderr, queue)
             )
 
             streams_done = 0

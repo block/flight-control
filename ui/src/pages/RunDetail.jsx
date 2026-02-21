@@ -1,7 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { api } from '../lib/api'
+import useRunLogs from '../hooks/useRunLogs'
 import LogViewer from '../components/LogViewer'
+import StructuredLogViewer from '../components/StructuredLogViewer'
 
 const statusConfig = {
   queued: { label: 'Queued', class: 'bg-amber-50 text-amber-700 border border-amber-200' },
@@ -32,6 +34,30 @@ export default function RunDetail() {
     api.listArtifacts(id).then(setArtifacts).catch(() => {})
   }, [id, run?.status])
 
+  const isActive = run ? ['queued', 'assigned', 'running'].includes(run.status) : false
+  const { logs } = useRunLogs(run?.id, isActive)
+
+  // Parse event logs into objects for StructuredLogViewer
+  const events = useMemo(() => {
+    const parsed = []
+    for (const l of logs) {
+      if (l.stream !== 'event') continue
+      try {
+        parsed.push(JSON.parse(l.line))
+      } catch {
+        // skip malformed
+      }
+    }
+    return parsed
+  }, [logs])
+
+  // Only use structured viewer if there are actual content events (message or tool_call),
+  // not just notifications/complete which can appear even without --output-format stream-json
+  const hasStructuredOutput = useMemo(
+    () => events.some((e) => e.type === 'message' || e.type === 'tool_call'),
+    [events]
+  )
+
   if (error) {
     return (
       <div className="card p-4 border-red-200 bg-red-50 text-red-700 text-sm">
@@ -41,7 +67,6 @@ export default function RunDetail() {
   }
   if (!run) return <div className="text-sm text-slate-500">Loading...</div>
 
-  const isActive = ['queued', 'assigned', 'running'].includes(run.status)
   const config = statusConfig[run.status] || {
     label: run.status,
     class: 'bg-slate-50 text-slate-600 border border-slate-200',
@@ -139,7 +164,11 @@ export default function RunDetail() {
       )}
 
       <h2 className="text-sm font-semibold text-slate-900 uppercase tracking-wide mb-3">Output</h2>
-      <LogViewer runId={run.id} isActive={isActive} />
+      {hasStructuredOutput ? (
+        <StructuredLogViewer events={events} isActive={isActive} />
+      ) : (
+        <LogViewer logs={logs} isActive={isActive} />
+      )}
     </div>
   )
 }

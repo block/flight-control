@@ -2,7 +2,7 @@ import asyncio
 import logging
 import tempfile
 
-from orchestrator_worker.agents.goose import GooseRunner
+from orchestrator_worker.agents import get_runner
 from orchestrator_worker.client import ServerClient
 from orchestrator_worker.log_streamer import LogStreamer
 from orchestrator_worker.skill_writer import download_and_write_skills
@@ -44,7 +44,7 @@ async def execute_run(client: ServerClient, worker_id: str, job: dict) -> None:
             if skills:
                 await download_and_write_skills(client, skills, work_dir)
 
-            runner = GooseRunner()
+            runner = get_runner(job.get("agent_type", "goose"))
 
             async for stream, line in runner.run(
                 task_prompt=job["task_prompt"],
