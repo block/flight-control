@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, UploadFile
+from fastapi.responses import FileResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from orchestrator.auth import AuthContext, require_auth
@@ -12,7 +13,7 @@ from orchestrator.schemas.workers import (
     WorkerRegisterRequest,
     WorkerRegisterResponse,
 )
-from orchestrator.services import artifact_service, log_service, worker_service
+from orchestrator.services import artifact_service, log_service, skill_service, worker_service
 
 router = APIRouter(prefix="/workers", tags=["workers"])
 
@@ -76,6 +77,25 @@ async def upload_artifact(
         workspace_id=auth.workspace_id,
     )
     return artifact
+
+
+@router.get("/skills/{skill_id}/files/{file_path:path}")
+async def download_skill_file(
+    skill_id: str,
+    file_path: str,
+    auth: AuthContext = Depends(require_auth),
+    db: AsyncSession = Depends(get_db),
+):
+    """Download a skill file (for workers to fetch skill assets)."""
+    skill = await skill_service.get_skill(db, skill_id, auth.workspace_id)
+    if not skill:
+        raise HTTPException(status_code=404, detail="Skill not found")
+
+    abs_path = skill_service.get_skill_file_path(auth.workspace_id, skill.name, file_path)
+    if not abs_path.is_file():
+        raise HTTPException(status_code=404, detail="File not found")
+
+    return FileResponse(path=str(abs_path), filename=abs_path.name)
 
 
 @router.post("/runs/{run_id}/complete")

@@ -15,7 +15,7 @@ ENV SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
 
 # Install system deps (bzip2 for goose install, libxcb1 for goose runtime)
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    curl bzip2 libxcb1 \
+    curl bzip2 libxcb1 ripgrep \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Node.js (for MCP server npx commands)
@@ -23,6 +23,12 @@ RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
     && apt-get install -y nodejs \
     && rm -rf /var/lib/apt/lists/*
 RUN if [ -n "$NPM_REGISTRY" ]; then npm config set registry "$NPM_REGISTRY"; fi
+
+# Install agent-browser + Playwright Chromium (pre-baked to avoid runtime downloads)
+RUN npm install -g agent-browser \
+    && npx playwright install --with-deps chromium \
+    && npx playwright install ffmpeg \
+    && rm -rf /var/lib/apt/lists/* /tmp/*
 
 # Install Goose (Block's Goose CLI)
 RUN CONFIGURE=false curl -fsSL https://github.com/block/goose/releases/download/stable/download_cli.sh | CONFIGURE=false bash \

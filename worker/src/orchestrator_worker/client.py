@@ -68,6 +68,14 @@ class ServerClient:
             resp.raise_for_status()
             return resp.json()
 
+    async def download_skill_file(self, skill_id: str, file_path: str) -> bytes:
+        async with self._client() as client:
+            resp = await client.get(
+                f"/workers/skills/{skill_id}/files/{file_path}",
+            )
+            resp.raise_for_status()
+            return resp.content
+
     async def complete_run(
         self,
         run_id: str,

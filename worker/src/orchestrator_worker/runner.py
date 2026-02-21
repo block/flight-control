@@ -5,6 +5,7 @@ import tempfile
 from orchestrator_worker.agents.goose import GooseRunner
 from orchestrator_worker.client import ServerClient
 from orchestrator_worker.log_streamer import LogStreamer
+from orchestrator_worker.skill_writer import download_and_write_skills
 
 logger = logging.getLogger(__name__)
 
@@ -38,6 +39,11 @@ async def execute_run(client: ServerClient, worker_id: str, job: dict) -> None:
 
     try:
         with tempfile.TemporaryDirectory(prefix=f"orch-{run_id}-") as work_dir:
+            # Download skill files
+            skills = job.get("skills", [])
+            if skills:
+                await download_and_write_skills(client, skills, work_dir)
+
             runner = GooseRunner()
 
             async for stream, line in runner.run(

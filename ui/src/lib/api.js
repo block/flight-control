@@ -80,6 +80,44 @@ export const api = {
   listWorkers: () => request('/system/workers'),
   getMetrics: () => request('/system/metrics'),
 
+  // Skills
+  listSkills: () => request('/skills'),
+  getSkill: (id) => request(`/skills/${id}`),
+  deleteSkill: (id) => request(`/skills/${id}`, { method: 'DELETE' }),
+  uploadSkill: async (formData) => {
+    const token = localStorage.getItem('api_key') || 'admin'
+    const res = await fetch(`${API_BASE}/skills`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'X-Workspace-ID': getWorkspaceId(),
+      },
+      body: formData,
+    })
+    if (!res.ok) {
+      const text = await res.text()
+      throw new Error(`${res.status}: ${text}`)
+    }
+    return res.json()
+  },
+  downloadSkillFile: async (skillId, filePath, filename) => {
+    const token = localStorage.getItem('api_key') || 'admin'
+    const res = await fetch(`${API_BASE}/skills/${skillId}/files/${filePath}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'X-Workspace-ID': getWorkspaceId(),
+      },
+    })
+    if (!res.ok) throw new Error(`${res.status}: ${await res.text()}`)
+    const blob = await res.blob()
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = filename
+    a.click()
+    URL.revokeObjectURL(url)
+  },
+
   // Workspaces
   listWorkspaces: () => request('/workspaces'),
   createWorkspace: (data) => request('/workspaces', { method: 'POST', body: JSON.stringify(data) }),

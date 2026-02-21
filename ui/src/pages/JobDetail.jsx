@@ -110,6 +110,23 @@ export default function JobDetail() {
             </div>
           </div>
         )}
+
+        <div className="mt-5 pt-5 border-t border-slate-100">
+          <div className="text-xs font-medium text-slate-400 uppercase tracking-wide mb-2">Skills</div>
+          {job.skill_ids === null || job.skill_ids === undefined ? (
+            <span className="text-sm text-slate-500">All workspace skills</span>
+          ) : job.skill_ids.length === 0 ? (
+            <span className="text-sm text-slate-500">No skills</span>
+          ) : (
+            <div className="flex flex-wrap gap-2">
+              {job.skill_ids.map((s) => (
+                <span key={s} className="text-xs font-mono bg-slate-50 border border-slate-150 px-2.5 py-1 rounded-md text-slate-600">
+                  {s}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="flex items-center justify-between mb-4">

@@ -10,6 +10,7 @@ class Settings(BaseSettings):
     worker_heartbeat_timeout: int = 90  # seconds before worker considered dead
     log_level: str = "INFO"
     artifact_storage_path: str = "./data/artifacts"
+    skill_storage_path: str = "./data/skills"
 
     model_config = {"env_prefix": "ORCH_"}
 

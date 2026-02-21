@@ -7,6 +7,9 @@ import Workers from './pages/Workers'
 import Credentials from './pages/Credentials'
 import Schedules from './pages/Schedules'
 import NewRun from './pages/NewRun'
+import Skills from './pages/Skills'
+import SkillDetail from './pages/SkillDetail'
+import LogViewerDemo from './pages/LogViewerDemo'
 import WorkspacePicker from './components/WorkspacePicker'
 
 const navItems = [
@@ -16,6 +19,7 @@ const navItems = [
   { path: '/runs/new', label: 'New Run' },
   { path: '/workers', label: 'Workers' },
   { path: '/credentials', label: 'Credentials' },
+  { path: '/skills', label: 'Skills' },
 ]
 
 export default function App() {
@@ -67,7 +71,10 @@ export default function App() {
           <Route path="/runs/:id" element={<RunDetail />} />
           <Route path="/workers" element={<Workers />} />
           <Route path="/credentials" element={<Credentials />} />
+          <Route path="/skills" element={<Skills />} />
+          <Route path="/skills/:id" element={<SkillDetail />} />
           <Route path="/schedules" element={<Schedules />} />
+          <Route path="/demo/logs" element={<LogViewerDemo />} />
         </Routes>
       </main>
     </div>

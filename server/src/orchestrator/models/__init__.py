@@ -10,6 +10,8 @@ from orchestrator.models.artifact import Artifact
 from orchestrator.models.user import User
 from orchestrator.models.workspace import Workspace
 from orchestrator.models.workspace_member import WorkspaceMember
+from orchestrator.models.skill import Skill
+from orchestrator.models.skill_file import SkillFile
 
 __all__ = [
     "Base",
@@ -24,4 +26,6 @@ __all__ = [
     "User",
     "Workspace",
     "WorkspaceMember",
+    "Skill",
+    "SkillFile",
 ]

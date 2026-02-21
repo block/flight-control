@@ -26,6 +26,7 @@ class JobDefinitionCreate(BaseModel):
     mcp_servers: list[McpServerConfig | dict] = []
     env_vars: dict[str, str] = {}
     credential_ids: list[str] = []
+    skill_ids: list[str] | None = None  # null=all, []=none, ["name"]=specific
     labels: dict[str, str] = {}
     timeout_seconds: int = 1800
 
@@ -39,6 +40,7 @@ class JobDefinitionUpdate(BaseModel):
     mcp_servers: list[McpServerConfig | dict] | None = None
     env_vars: dict[str, str] | None = None
     credential_ids: list[str] | None = None
+    skill_ids: list[str] | None = None
     labels: dict[str, str] | None = None
     timeout_seconds: int | None = None
 
@@ -54,6 +56,7 @@ class JobDefinitionResponse(BaseModel):
     mcp_servers: list = []
     env_vars: dict = {}
     credential_ids: list = []
+    skill_ids: list | None = None
     labels: dict = {}
     timeout_seconds: int
     created_at: datetime

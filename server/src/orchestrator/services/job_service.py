@@ -34,6 +34,7 @@ async def create_job(db: AsyncSession, data: JobDefinitionCreate, workspace_id: 
         mcp_servers=[s if isinstance(s, dict) else s.model_dump() for s in data.mcp_servers],
         env_vars=data.env_vars,
         credential_ids=data.credential_ids,
+        skill_ids=data.skill_ids,
         labels=data.labels,
         timeout_seconds=data.timeout_seconds,
     )
@@ -86,6 +87,7 @@ async def trigger_run(db: AsyncSession, job_id: str, workspace_id: str | None = 
         mcp_servers=job.mcp_servers,
         env_vars=job.env_vars,
         credential_ids=job.credential_ids,
+        skill_ids=job.skill_ids,
         required_labels=job.labels,  # Copy job labels as required worker labels
         timeout_seconds=job.timeout_seconds,
     )

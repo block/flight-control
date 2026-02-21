@@ -12,6 +12,7 @@ class RunCreate(BaseModel):
     mcp_servers: list = []
     env_vars: dict = {}
     credential_ids: list = []
+    skill_ids: list[str] | None = None  # null=all, []=none, ["name"]=specific
     required_labels: dict[str, str] = {}  # Labels required on worker to run this job
     timeout_seconds: int = 1800
 
@@ -28,6 +29,7 @@ class RunResponse(BaseModel):
     agent_config: dict = {}
     mcp_servers: list = []
     credential_ids: list = []
+    skill_ids: list | None = None
     required_labels: dict = {}
     timeout_seconds: int
     started_at: datetime | None = None

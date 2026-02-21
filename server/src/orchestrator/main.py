@@ -67,12 +67,13 @@ app.add_middleware(
 )
 
 # Register API routers
-from orchestrator.api import credentials, jobs, runs, schedules, system, workers, workspaces
+from orchestrator.api import credentials, jobs, runs, schedules, skills, system, workers, workspaces
 
 app.include_router(jobs.router, prefix="/api/v1")
 app.include_router(runs.router, prefix="/api/v1")
 app.include_router(workers.router, prefix="/api/v1")
 app.include_router(credentials.router, prefix="/api/v1")
+app.include_router(skills.router, prefix="/api/v1")
 app.include_router(schedules.router, prefix="/api/v1")
 app.include_router(system.router, prefix="/api/v1")
 app.include_router(workspaces.router, prefix="/api/v1")

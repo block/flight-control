@@ -8,8 +8,10 @@ from orchestrator.encryption import decrypt_value
 from orchestrator.models.base import utcnow
 from orchestrator.models.credential import Credential
 from orchestrator.models.job_run import JobRun
+from orchestrator.models.skill import Skill
+from orchestrator.models.skill_file import SkillFile
 from orchestrator.models.worker import Worker
-from orchestrator.schemas.workers import PollResponse, WorkerRegisterRequest
+from orchestrator.schemas.workers import PollResponse, SkillFilePollInfo, SkillPollInfo, WorkerRegisterRequest
 
 
 async def register_worker(db: AsyncSession, data: WorkerRegisterRequest, workspace_id: str) -> Worker:
@@ -108,6 +110,51 @@ async def poll_for_job(db: AsyncSession, worker_id: str) -> PollResponse | None:
             except Exception:
                 pass  # Skip failed decryptions
 
+    # Resolve skills (scoped to workspace)
+    skill_poll_infos: list[SkillPollInfo] = []
+    skill_ids = run.skill_ids  # null=all, []=none, ["name"]=specific
+
+    if skill_ids is None:
+        # null = all workspace skills
+        skill_result = await db.execute(
+            select(Skill).where(Skill.workspace_id == worker.workspace_id)
+        )
+        skills = list(skill_result.scalars().all())
+    elif skill_ids:
+        # Explicit list of skill names
+        skill_result = await db.execute(
+            select(Skill).where(
+                Skill.name.in_(skill_ids),
+                Skill.workspace_id == worker.workspace_id,
+            )
+        )
+        skills = list(skill_result.scalars().all())
+    else:
+        # Empty list = no skills
+        skills = []
+
+    for skill in skills:
+        # Fetch file manifest for each skill
+        file_result = await db.execute(
+            select(SkillFile).where(SkillFile.skill_id == skill.id)
+        )
+        skill_files = [
+            SkillFilePollInfo(
+                file_path=sf.file_path,
+                size_bytes=sf.size_bytes,
+                checksum_sha256=sf.checksum_sha256,
+                content_type=sf.content_type,
+            )
+            for sf in file_result.scalars().all()
+        ]
+        skill_poll_infos.append(SkillPollInfo(
+            id=skill.id,
+            name=skill.name,
+            instructions=skill.instructions,
+            allowed_tools=skill.allowed_tools,
+            files=skill_files,
+        ))
+
     return PollResponse(
         run_id=run.id,
         name=run.name,
@@ -117,6 +164,7 @@ async def poll_for_job(db: AsyncSession, worker_id: str) -> PollResponse | None:
         mcp_servers=run.mcp_servers or [],
         env_vars=run.env_vars or {},
         credentials=credentials,
+        skills=skill_poll_infos,
         timeout_seconds=run.timeout_seconds,
     )
 

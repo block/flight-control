@@ -67,10 +67,11 @@ class GooseRunner(AgentRunner):
                 "Upload any important output files, reports, generated assets, or results that should be\n"
                 "preserved beyond this run."
             )
+
             cmd.extend(["--system", system_prompt])
 
         # Add max turns (default 30)
-        max_turns = agent_config.get("max_turns", 30)
+        max_turns = agent_config.get("max_turns", 60)
         cmd.extend(["--max-turns", str(max_turns)])
 
         # Pass provider/model as CLI flags too (more reliable than env vars)

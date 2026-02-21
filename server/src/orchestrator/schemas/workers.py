@@ -18,6 +18,21 @@ class WorkerHeartbeatRequest(BaseModel):
     status: str = "online"  # online, busy
 
 
+class SkillFilePollInfo(BaseModel):
+    file_path: str
+    size_bytes: int
+    checksum_sha256: str
+    content_type: str
+
+
+class SkillPollInfo(BaseModel):
+    id: str
+    name: str
+    instructions: str
+    allowed_tools: str | None = None
+    files: list[SkillFilePollInfo] = []
+
+
 class PollResponse(BaseModel):
     run_id: str
     name: str
@@ -27,6 +42,7 @@ class PollResponse(BaseModel):
     mcp_servers: list = []
     env_vars: dict = {}
     credentials: dict[str, str] = {}  # env_var -> decrypted value
+    skills: list[SkillPollInfo] = []
     timeout_seconds: int
 
 

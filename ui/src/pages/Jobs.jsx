@@ -6,18 +6,22 @@ import ProviderModelSelect from '../components/ProviderModelSelect'
 export default function Jobs() {
   const [jobs, setJobs] = useState([])
   const [credentials, setCredentials] = useState([])
+  const [skills, setSkills] = useState([])
   const [showForm, setShowForm] = useState(false)
   const [form, setForm] = useState({
     name: '', task_prompt: '', agent_type: 'goose', timeout_seconds: 1800,
     agent_config: { provider: 'anthropic', model: 'claude-sonnet-4-5' },
     credential_ids: [],
+    skill_ids: null, // null = all workspace skills
   })
+  const [skillMode, setSkillMode] = useState('all') // 'all' or 'select'
   const [error, setError] = useState(null)
   const navigate = useNavigate()
 
   useEffect(() => {
     api.listJobs().then(setJobs).catch((e) => setError(e.message))
     api.listCredentials().then(setCredentials).catch(() => {})
+    api.listSkills().then(setSkills).catch(() => {})
   }, [])
 
   const handleCreate = async (e) => {
@@ -130,6 +134,60 @@ export default function Jobs() {
                     </label>
                   ))}
                 </div>
+              </div>
+            )}
+            {skills.length > 0 && (
+              <div className="pt-2 border-t border-slate-100">
+                <label className="block text-sm font-medium text-slate-700 mb-2">Skills</label>
+                <div className="flex items-center gap-4 mb-2">
+                  <label className="flex items-center gap-2 text-sm text-slate-600 cursor-pointer">
+                    <input
+                      type="radio"
+                      checked={skillMode === 'all'}
+                      onChange={() => { setSkillMode('all'); setForm({ ...form, skill_ids: null }) }}
+                      className="accent-teal-600"
+                    />
+                    All workspace skills
+                  </label>
+                  <label className="flex items-center gap-2 text-sm text-slate-600 cursor-pointer">
+                    <input
+                      type="radio"
+                      checked={skillMode === 'select'}
+                      onChange={() => { setSkillMode('select'); setForm({ ...form, skill_ids: [] }) }}
+                      className="accent-teal-600"
+                    />
+                    Select specific
+                  </label>
+                </div>
+                {skillMode === 'select' && (
+                  <div className="flex flex-wrap gap-2">
+                    {skills.map((skill) => (
+                      <label
+                        key={skill.id}
+                        className={`flex items-center gap-2 text-sm px-3 py-2 rounded-md border cursor-pointer transition-colors ${
+                          (form.skill_ids || []).includes(skill.name)
+                            ? 'bg-teal-50 border-teal-200 text-teal-800'
+                            : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300'
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={(form.skill_ids || []).includes(skill.name)}
+                          onChange={(e) => {
+                            const ids = form.skill_ids || []
+                            if (e.target.checked) {
+                              setForm({ ...form, skill_ids: [...ids, skill.name] })
+                            } else {
+                              setForm({ ...form, skill_ids: ids.filter((s) => s !== skill.name) })
+                            }
+                          }}
+                          className="accent-teal-600"
+                        />
+                        <span className="font-medium">{skill.name}</span>
+                      </label>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
             <div className="pt-2">
