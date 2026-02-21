@@ -4,6 +4,8 @@
 
 Flight Control is an open-source platform for dispatching AI agent tasks across a fleet of worker nodes. You describe work in natural language, the control plane queues it, and workers pull jobs, execute them, and stream results back in real time.
 
+Running AI agents at scale shouldn't require adopting a massive enterprise orchestration platform or paying per-seat SaaS fees. Flight Control gives you a lightweight, self-hosted control plane that you can deploy anywhere containers run.
+
 > **Status: Early Prototype.** This project runs on localhost via Docker Compose. It is not yet production-hardened. The architecture is designed for distributed deployment, but today it's a single-host development tool. Contributions and feedback welcome.
 
 ## Quick Start
